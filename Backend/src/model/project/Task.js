@@ -1,10 +1,10 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const taskSchema = new mongoose.Schema(
   {
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       required: true,
     },
     title: {
@@ -15,40 +15,40 @@ const taskSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
-      default: "",
+      default: '',
     },
     priority: {
       type: String,
-      enum: ["Low", "Medium", "High", "Very High"],
-      default: "Meduim",
+      enum: ['Low', 'Medium', 'High', 'Very High'],
+      default: 'Meduim',
     },
     status: {
       type: String,
-      enum: ["New Task", "In Progress", "Under Review", "Completed"],
-      default: "New Task",
+      enum: ['New Task', 'In Progress', 'Under Review', 'Completed'],
+      default: 'New Task',
     },
     assignedToTeam: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Team",
+        ref: 'Team',
       },
     ],
     assignedToMember: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: 'User',
       },
     ],
     inSection: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Section",
+      ref: 'Section',
       required: true,
     },
     subTasks: [
       {
         addedBy: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+          ref: 'User',
           required: true,
           trim: true,
         },
@@ -60,7 +60,7 @@ const taskSchema = new mongoose.Schema(
         description: {
           type: String,
           trim: true,
-          default: "",
+          default: '',
         },
         isCompleted: {
           type: Boolean,
@@ -72,7 +72,7 @@ const taskSchema = new mongoose.Schema(
       {
         addedBy: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+          ref: 'User',
           required: true,
           trim: true,
         },
@@ -91,7 +91,7 @@ const taskSchema = new mongoose.Schema(
       {
         addedBy: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+          ref: 'User',
           required: true,
           trim: true,
         },
@@ -115,7 +115,7 @@ const taskSchema = new mongoose.Schema(
       {
         addedBy: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+          ref: 'User',
           required: true,
         },
         fileName: {
@@ -139,9 +139,9 @@ const taskSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
-const Task = mongoose.model("Task", taskSchema);
+const Task = mongoose.model('Task', taskSchema);
 
 export default Task;

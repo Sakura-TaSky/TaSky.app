@@ -25,6 +25,7 @@ import Comments from './view/task/Comments';
 import Conform from './view/conform/Conform';
 import MemberProfilePopup from './view/org/MemberProfilePopup';
 import ProjectTeam from './view/project/ProjectTeam';
+import AddTaskBtn from './view/project/AddTaskBtn';
 
 export {
   BlueBtn,
@@ -54,4 +55,5 @@ export {
   Conform,
   MemberProfilePopup,
   ProjectTeam,
+  AddTaskBtn,
 };

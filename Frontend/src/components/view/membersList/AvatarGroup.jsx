@@ -18,24 +18,14 @@ const AvatarGroup = (
   const avatarSize = sizeClasses[size] || sizeClasses.md;
 
   return (
-    <div
-      onClick={onClick}
-      className={`${className} flex items-center -space-x-2.5`}
-    >
+    <div onClick={onClick} className={`${className} flex items-center -space-x-2.5`}>
       {visibleUsers.map(user => (
-        <div
-          key={`${groupKey}-${user?._id}`}
-          className='relative group hover:z-20'
-        >
+        <div key={`${groupKey}-${user?._id}`} className='relative group hover:z-20'>
           {/* Avatar */}
           <div
             className={`${avatarSize} rounded-full border-2 border-white shadow-sm overflow-hidden hover:scale-105 smooth`}
           >
-            <img
-              src={user?.profilePhoto}
-              alt={user?.userName}
-              className='w-full h-full object-cover'
-            />
+            <img src={user?.profilePhoto} alt={user?.userName} className='w-full h-full object-cover' />
           </div>
 
           {/* Tooltip */}

@@ -1,13 +1,6 @@
 import React, { useEffect } from 'react';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import {
-  AppLayout,
-  AppLoader,
-  Auth,
-  AuthLayout,
-  NotifierList,
-  useGetUser,
-} from './global';
+import { AppLayout, AppLoader, Auth, AuthLayout, NotifierList, useGetUser } from './global';
 import { useSelector } from 'react-redux';
 
 const App = () => {
@@ -58,7 +51,7 @@ const App = () => {
           }
         />
       </Routes>
-      <NotifierList className='right-5 top-5' />
+      <NotifierList className='left-5 bottom-5' />
     </>
   );
 };

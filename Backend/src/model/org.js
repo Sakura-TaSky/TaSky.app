@@ -1,10 +1,10 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const organizationSchema = new mongoose.Schema(
   {
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       required: true,
     },
     orgProfilePhoto: {
@@ -18,31 +18,31 @@ const organizationSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
-      default: "",
+      default: '',
     },
     projects: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Project",
+        ref: 'Project',
       },
     ],
     teams: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Team",
+        ref: 'Team',
       },
     ],
     members: [
       {
         member: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+          ref: 'User',
           required: true,
         },
         role: {
           type: String,
-          enum: ["admin", "moderator", "leader", "member", "viewer"],
-          default: "member",
+          enum: ['admin', 'moderator', 'leader', 'member', 'viewer'],
+          default: 'member',
         },
         joinedAt: {
           type: Date,
@@ -65,9 +65,9 @@ const organizationSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
-const Organization = mongoose.model("Organization", organizationSchema);
+const Organization = mongoose.model('Organization', organizationSchema);
 
 export default Organization;

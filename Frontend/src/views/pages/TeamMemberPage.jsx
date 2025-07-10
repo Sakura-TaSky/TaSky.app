@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Btn,
@@ -10,6 +10,7 @@ import {
   setMember,
   setTeamErrorMessage,
   TeamAddMember,
+  TeamAssignedTask,
   TeamTimeline,
   TeamUpdate,
   useTeam,
@@ -17,15 +18,14 @@ import {
 } from '@/global';
 import { TbUserPlus } from 'react-icons/tb';
 import { LogOut, Search } from 'lucide-react';
-import { RiEdit2Fill } from 'react-icons/ri';
+import { RiEdit2Fill, RiTaskLine } from 'react-icons/ri';
 import { HiDotsHorizontal } from 'react-icons/hi';
+import { MdOutlineClose } from 'react-icons/md';
 
 const roles = ['all', 'admin', 'moderator', 'leader', 'member', 'viewer'];
 
 const TeamMemberPage = () => {
-  const { team, teamLoading, teamErrorMessage } = useSelector(
-    state => state.team
-  );
+  const { team, teamLoading, teamErrorMessage } = useSelector(state => state.team);
   const { user } = useSelector(state => state.auth);
 
   const { membersShowInList } = useUIState();
@@ -40,13 +40,11 @@ const TeamMemberPage = () => {
   const [showMemberProfile, setShowMemberProfile] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [showLeaveTeamPopup, setShowLeaveTeamPopup] = useState(false);
-
+  const [showTeamAssignedTask, setShowTeamAssignedTask] = useState(false);
   const filteredMembers =
     team?.members?.filter(({ member, role }) => {
       const matchesRole = activeRole === 'all' || role === activeRole;
-      const matchesSearch = member?.userName
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase());
+      const matchesSearch = member?.userName?.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesRole && matchesSearch;
     }) || [];
 
@@ -60,6 +58,12 @@ const TeamMemberPage = () => {
     }
   };
 
+  useEffect(() => {
+    if (team) {
+      setShowTeamAssignedTask(false);
+    }
+  }, [team]);
+
   return team ? (
     <>
       <div className='flex flex-col'>
@@ -67,11 +71,7 @@ const TeamMemberPage = () => {
           <div className='font-medium flex flex-wrap gap-2 items-center max-w-[70%]'>
             <div className='flex gap-2 items-center'>
               <TeamTimeline />
-              <p className='line-clamp-1'>
-                {team
-                  ? `Team - ${team?.teamName}'s Members`
-                  : 'Not any Team selected'}
-              </p>
+              <p className='line-clamp-1'>{team ? `Team - ${team?.teamName}'s Members` : 'Not any Team selected'}</p>
             </div>
             <i
               onClick={() => {
@@ -85,15 +85,26 @@ const TeamMemberPage = () => {
               <RiEdit2Fill />
             </i>
           </div>
-          <Btn
-            onClick={() => {
-              if (!team) return;
-              setShowInviteForm(true);
-            }}
-            text='Member'
-            icon={<TbUserPlus size={16} />}
-            className='px-3 py-2 rounded-md bg-zinc-500/10 hover:text-blue-500 hover:bg-blue-500/20 text-xs font-medium smooth'
-          />
+          <div className='flex gap-1 flex-col items-end'>
+            <Btn
+              onClick={() => {
+                if (!team) return;
+                setShowInviteForm(true);
+              }}
+              text='Member'
+              icon={<TbUserPlus size={16} />}
+              className='px-3 py-2 rounded-md bg-zinc-500/10 hover:text-blue-500 hover:bg-blue-500/20 text-xs font-medium smooth'
+            />
+            <Btn
+              text='Team Task'
+              icon={showTeamAssignedTask ? <MdOutlineClose size={16} /> : <RiTaskLine size={16} />}
+              onClick={() => {
+                if (!team) return;
+                setShowTeamAssignedTask(!showTeamAssignedTask);
+              }}
+              className={`${showTeamAssignedTask ? 'text-green-500 bg-green-500/20' : 'hover:text-green-500 hover:bg-green-500/20 bg-zinc-500/10'} px-3 py-2 rounded-md text-xs font-medium smooth`}
+            />
+          </div>
         </div>
         <div className='flex justify-between flex-wrap items-center border-y-2 border-zinc-500/10 px-4 py-1.5 gap-2 '>
           <div className='flex overflow-x-auto gap-1'>
@@ -102,9 +113,7 @@ const TeamMemberPage = () => {
                 key={role}
                 onClick={() => setActiveRole(role)}
                 className={`capitalize px-3 py-1.5 rounded text-sm ${
-                  activeRole === role
-                    ? 'bg-zinc-500/20 shadow'
-                    : 'hover:bg-zinc-500/20'
+                  activeRole === role ? 'bg-zinc-500/20 shadow' : 'hover:bg-zinc-500/20'
                 }`}
               >
                 {role}
@@ -122,7 +131,7 @@ const TeamMemberPage = () => {
             />
           </div>
         </div>
-        {membersShowInList ? (
+        {!showTeamAssignedTask && membersShowInList ? (
           <div className='overflow-x-auto md:p-4 p-2 hide-scrollbar'>
             {filteredMembers.length > 0 ? (
               <table className='min-w-full text-sm text-left border border-zinc-500/10'>
@@ -137,35 +146,24 @@ const TeamMemberPage = () => {
                 </thead>
                 <tbody>
                   {filteredMembers.map(({ member, role, joinedAt, _id }) => (
-                    <tr
-                      key={_id}
-                      className='border-t hover:bg-zinc-500/5 border-zinc-500/10 smooth'
-                    >
+                    <tr key={_id} className='border-t hover:bg-zinc-500/5 border-zinc-500/10 smooth'>
                       <td className='px-4 py-2 flex items-center gap-3'>
                         <img
                           src={member.profilePhoto}
                           alt={member.userName}
                           className='w-8 h-8 rounded-full object-cover border border-zinc-300'
                         />
-                        <span
-                          className={`font-medium ${user._id === member._id ? 'text-blue-500' : ''}`}
-                        >
+                        <span className={`font-medium ${user._id === member._id ? 'text-blue-500' : ''}`}>
                           {user._id === member._id ? 'YOU' : member.userName}
                         </span>
                       </td>
-                      <td className='px-4 py-2 text-zinc-500 dark:text-zinc-300 break-all'>
-                        {member.email}
-                      </td>
+                      <td className='px-4 py-2 text-zinc-500 dark:text-zinc-300 break-all'>{member.email}</td>
                       <td className='px-4 py-2'>
-                        <span
-                          className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${GetRoleColor(role)}`}
-                        >
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${GetRoleColor(role)}`}>
                           {role}
                         </span>
                       </td>
-                      <td className='px-4 py-2 text-zinc-500 text-xs italic'>
-                        {formatDate(joinedAt)}
-                      </td>
+                      <td className='px-4 py-2 text-zinc-500 text-xs italic'>{formatDate(joinedAt)}</td>
                       <td
                         onClick={() => (
                           dispatch(
@@ -185,11 +183,11 @@ const TeamMemberPage = () => {
                 </tbody>
               </table>
             ) : (
-              <div className='text-sm text-zinc-400 italic mt-10 text-center'>
-                No members found.
-              </div>
+              <div className='text-sm text-zinc-400 italic mt-10 text-center'>No members found.</div>
             )}
           </div>
+        ) : showTeamAssignedTask ? (
+          <TeamAssignedTask />
         ) : (
           <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-2 md:p-4'>
             {filteredMembers.length > 0 ? (
@@ -201,9 +199,7 @@ const TeamMemberPage = () => {
                   )}`}
                 >
                   <div className='w-full flex justify-between items-center mb-2'>
-                    <span
-                      className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${GetRoleColor(role)}`}
-                    >
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${GetRoleColor(role)}`}>
                       {role}
                     </span>
                     <i
@@ -227,16 +223,10 @@ const TeamMemberPage = () => {
                     className='h-14 w-14 rounded-full object-cover border border-zinc-500'
                   />
                   <div className='mt-2 text-center flex flex-col'>
-                    <span
-                      className={`${
-                        user._id === member._id ? 'text-blue-500' : ''
-                      } font-semibold text-sm`}
-                    >
+                    <span className={`${user._id === member._id ? 'text-blue-500' : ''} font-semibold text-sm`}>
                       {user._id === member._id ? 'YOU' : member?.userName}
                     </span>
-                    <span className='text-xs text-zinc-600 dark:text-zinc-400 break-all'>
-                      {member?.email}
-                    </span>
+                    <span className='text-xs text-zinc-600 dark:text-zinc-400 break-all'>{member?.email}</span>
                   </div>
                   <span className='mt-3 text-[9px] text-zinc-500 italic self-end font-medium'>
                     Joined • {formatDate(joinedAt)}
@@ -244,9 +234,7 @@ const TeamMemberPage = () => {
                 </div>
               ))
             ) : (
-              <div className='text-sm text-zinc-400 italic mt-10'>
-                No members found.
-              </div>
+              <div className='text-sm text-zinc-400 italic mt-10'>No members found.</div>
             )}
             <div title='Leave Team' className='fixed bottom-5 right-5'>
               <IconBtn
@@ -261,22 +249,11 @@ const TeamMemberPage = () => {
             </div>
           </div>
         )}
-        {showUpdateTeamPopup && (
-          <TeamUpdate
-            forTeamCreation={false}
-            setShowUpdateTeamPopup={setShowUpdateTeamPopup}
-          />
-        )}
+        {showUpdateTeamPopup && <TeamUpdate forTeamCreation={false} setShowUpdateTeamPopup={setShowUpdateTeamPopup} />}
         {showMemberProfile && (
-          <MemberProfilePopup
-            setShowMemberProfile={setShowMemberProfile}
-            forTeam={true}
-            forProject={false}
-          />
+          <MemberProfilePopup setShowMemberProfile={setShowMemberProfile} forTeam={true} forProject={false} />
         )}
-        {showInviteForm && (
-          <TeamAddMember setShowInviteForm={setShowInviteForm} />
-        )}
+        {showInviteForm && <TeamAddMember setShowInviteForm={setShowInviteForm} />}
         {showLeaveTeamPopup && (
           <Conform
             title={`Leave Team - ${team?.teamName}`}
@@ -284,10 +261,7 @@ const TeamMemberPage = () => {
               'Leaving this team means you will no longer have access to its projects, members, and activities. Are you sure you want to proceed   ?'
             }
             conformText={'Leave Team'}
-            onCancel={() => (
-              setShowLeaveTeamPopup(false),
-              dispatch(setTeamErrorMessage(''))
-            )}
+            onCancel={() => (setShowLeaveTeamPopup(false), dispatch(setTeamErrorMessage('')))}
             onConform={handleLeaveTeam}
             danger={true}
             loding={teamLoading}

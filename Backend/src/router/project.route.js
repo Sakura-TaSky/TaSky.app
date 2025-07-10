@@ -1,10 +1,10 @@
-import { Router } from "express";
-import { verifyJwt } from "../middleware/auth.middle.js";
-import { authorizeOrgRoles, getOrgAndRole } from "../middleware/org.middle.js";
+import { Router } from 'express';
+import { verifyJwt } from '../middleware/auth.middle.js';
+import { authorizeOrgRoles, getOrgAndRole } from '../middleware/org.middle.js';
 import {
   authorizeProjectRoles,
   getProjectandRole,
-} from "../middleware/project.middle.js";
+} from '../middleware/project.middle.js';
 import {
   createProject,
   updateProject,
@@ -16,101 +16,101 @@ import {
   changeProjectMemberRole,
   leaveProject,
   transferOwnershipOfProject,
-} from "../controllers/project.control.js";
+} from '../controllers/project.control.js';
 
 const projectRouter = Router();
 
 projectRouter
-  .route("/:orgId/createProject")
+  .route('/:orgId/createProject')
   .post(
     verifyJwt,
     getOrgAndRole,
-    authorizeOrgRoles(["admin", "moderator", "leader"]),
-    createProject,
+    authorizeOrgRoles(['admin', 'moderator', 'leader']),
+    createProject
   );
 
 projectRouter
-  .route("/:orgId/updateProject/:projectId")
+  .route('/:orgId/updateProject/:projectId')
   .put(
     verifyJwt,
     getOrgAndRole,
     getProjectandRole,
-    authorizeProjectRoles(["admin", "moderator", "leader"]),
-    updateProject,
+    authorizeProjectRoles(['admin', 'moderator', 'leader']),
+    updateProject
   );
 
 projectRouter
-  .route("/:orgId/deleteProject/:projectId")
+  .route('/:orgId/deleteProject/:projectId')
   .delete(
     verifyJwt,
     getOrgAndRole,
     getProjectandRole,
-    authorizeProjectRoles(["admin"]),
-    deleteProject,
+    authorizeProjectRoles(['admin']),
+    deleteProject
   );
 
 projectRouter
-  .route("/:orgId/addMemberInProject/:projectId/:memberId")
+  .route('/:orgId/addMemberInProject/:projectId/:memberId')
   .post(
     verifyJwt,
     getOrgAndRole,
     getProjectandRole,
-    authorizeProjectRoles(["admin", "moderator", "leader"]),
-    addMemberInProject,
+    authorizeProjectRoles(['admin', 'moderator', 'leader']),
+    addMemberInProject
   );
 
 projectRouter
-  .route("/:orgId/addTeamInProject/:projectId/:teamId")
+  .route('/:orgId/addTeamInProject/:projectId/:teamId')
   .post(
     verifyJwt,
     getOrgAndRole,
     getProjectandRole,
-    authorizeProjectRoles(["admin", "moderator", "leader"]),
-    addTeamInProject,
+    authorizeProjectRoles(['admin', 'moderator', 'leader']),
+    addTeamInProject
   );
 
 projectRouter
-  .route("/:orgId/removeMemberFromProject/:projectId/:memberId")
+  .route('/:orgId/removeMemberFromProject/:projectId/:memberId')
   .delete(
     verifyJwt,
     getOrgAndRole,
     getProjectandRole,
-    authorizeProjectRoles(["admin", "moderator", "leader"]),
-    removeMemberFromProject,
+    authorizeProjectRoles(['admin', 'moderator', 'leader']),
+    removeMemberFromProject
   );
 
 projectRouter
-  .route("/:orgId/removeTeamFromProject/:projectId/:teamId")
+  .route('/:orgId/removeTeamFromProject/:projectId/:teamId')
   .delete(
     verifyJwt,
     getOrgAndRole,
     getProjectandRole,
-    authorizeProjectRoles(["admin", "moderator", "leader"]),
-    removeTeamFromProject,
+    authorizeProjectRoles(['admin', 'moderator', 'leader']),
+    removeTeamFromProject
   );
 
 projectRouter
-  .route("/:orgId/changeProjectMemberRole/:projectId/:memberId")
+  .route('/:orgId/changeProjectMemberRole/:projectId/:memberId')
   .patch(
     verifyJwt,
     getOrgAndRole,
     getProjectandRole,
-    authorizeProjectRoles(["admin", "moderator"]),
-    changeProjectMemberRole,
+    authorizeProjectRoles(['admin', 'moderator']),
+    changeProjectMemberRole
   );
 
 projectRouter
-  .route("/:orgId/leaveProject/:projectId")
+  .route('/:orgId/leaveProject/:projectId')
   .patch(verifyJwt, getOrgAndRole, getProjectandRole, leaveProject);
 
 projectRouter
-  .route("/:orgId/transferOwnershipOfProject/:projectId/:memberId")
+  .route('/:orgId/transferOwnershipOfProject/:projectId/:memberId')
   .patch(
     verifyJwt,
     getOrgAndRole,
     getProjectandRole,
-    authorizeProjectRoles(["admin"]),
-    transferOwnershipOfProject,
+    authorizeProjectRoles(['admin']),
+    transferOwnershipOfProject
   );
 
 export default projectRouter;

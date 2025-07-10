@@ -1,22 +1,22 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const chatRoomSchema = new mongoose.Schema(
   {
     forProject: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Project",
+      ref: 'Project',
       required: true,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       required: true,
     },
     chatMembers: [
       {
         member: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+          ref: 'User',
           required: true,
         },
         joinedAt: {
@@ -29,7 +29,7 @@ const chatRoomSchema = new mongoose.Schema(
       {
         sender: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+          ref: 'User',
           required: true,
         },
         textMessage: {
@@ -58,9 +58,9 @@ const chatRoomSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
-const ChatRoom = mongoose.model("ChatRoom", chatRoomSchema);
+const ChatRoom = mongoose.model('ChatRoom', chatRoomSchema);
 
 export default ChatRoom;

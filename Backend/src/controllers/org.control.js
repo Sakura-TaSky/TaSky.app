@@ -1,23 +1,23 @@
-import mongoose from "mongoose";
-import Invite from "../model/Invite.js";
-import Organization from "../model/org.js";
-import Project from "../model/project/Project.js";
-import Team from "../model/Team.js";
-import User from "../model/User.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiRes } from "../utils/ApiRes.js";
-import { asyncFunc } from "../utils/asyncFunc.js";
-import { sendEmail } from "../service/SendEmail.js";
-import { uploadOnCloudinary } from "../service/Cloudinary.js";
-import { redisPub } from "../config/redis.js";
-import Section from "../model/project/Section.js";
-import Task from "../model/project/Task.js";
+import mongoose from 'mongoose';
+import Invite from '../model/Invite.js';
+import Organization from '../model/org.js';
+import Project from '../model/project/Project.js';
+import Team from '../model/Team.js';
+import User from '../model/User.js';
+import { ApiError } from '../utils/ApiError.js';
+import { ApiRes } from '../utils/ApiRes.js';
+import { asyncFunc } from '../utils/asyncFunc.js';
+import { sendEmail } from '../service/SendEmail.js';
+import { uploadOnCloudinary } from '../service/Cloudinary.js';
+import { redisPub } from '../config/redis.js';
+import Section from '../model/project/Section.js';
+import Task from '../model/project/Task.js';
 
 const createOrg = asyncFunc(async (req, res) => {
   const { orgName, description } = req.body;
   const user = req.user;
   if (!orgName) {
-    throw new ApiError(400, "Organization Name is required");
+    throw new ApiError(400, 'Organization Name is required');
   }
   const orgProfilePhotoUrl = req.file?.path;
   let orgProfilePhoto = null;
@@ -29,11 +29,11 @@ const createOrg = asyncFunc(async (req, res) => {
     createdBy: user._id,
     orgName,
     orgProfilePhoto: orgProfilePhoto?.url || null,
-    description: description || "",
+    description: description || '',
     members: [
       {
         member: user._id,
-        role: "admin",
+        role: 'admin',
       },
     ],
     timeline: [
@@ -45,7 +45,7 @@ const createOrg = asyncFunc(async (req, res) => {
   if (!newOrg) {
     throw new ApiError(
       400,
-      "Something went wrong while creating the organization",
+      'Something went wrong while creating the organization'
     );
   }
   const updatedUser = await User.findByIdAndUpdate(
@@ -54,18 +54,18 @@ const createOrg = asyncFunc(async (req, res) => {
       $push: {
         inOrg: {
           org: newOrg._id,
-          role: "admin",
+          role: 'admin',
         },
       },
     },
-    { new: true },
+    { new: true }
   ).populate({
-    path: "inOrg.org",
-    select: "orgName orgProfilePhoto",
+    path: 'inOrg.org',
+    select: 'orgName orgProfilePhoto',
   });
 
   const addedOrgEntry = updatedUser.inOrg.find(
-    (entry) => entry.org._id.toString() === newOrg._id.toString(),
+    entry => entry.org._id.toString() === newOrg._id.toString()
   );
   return res.status(200).json(
     new ApiRes(
@@ -79,8 +79,8 @@ const createOrg = asyncFunc(async (req, res) => {
         role: addedOrgEntry.role,
         _id: addedOrgEntry._id,
       },
-      "Organization created successfully",
-    ),
+      'Organization created successfully'
+    )
   );
 });
 
@@ -108,11 +108,7 @@ const updateOrg = asyncFunc(async (req, res) => {
   return res
     .status(200)
     .json(
-      new ApiRes(
-        200,
-        updatedOrg,
-        "Organization's details updated successfully",
-      ),
+      new ApiRes(200, updatedOrg, "Organization's details updated successfully")
     );
 });
 
@@ -121,12 +117,12 @@ const deleteOrg = asyncFunc(async (req, res) => {
   const user = req.user;
   const org = req.org;
   if (orgName.trim() !== org.orgName) {
-    throw new ApiError(403, "Invalid Organization name");
+    throw new ApiError(403, 'Invalid Organization name');
   }
   if (user._id.toString() !== org.createdBy.toString()) {
     throw new ApiError(
       403,
-      "Only the organization owner can delete the organization",
+      'Only the organization owner can delete the organization'
     );
   }
   const session = await mongoose.startSession();
@@ -134,7 +130,7 @@ const deleteOrg = asyncFunc(async (req, res) => {
   try {
     await User.updateMany(
       {
-        "inOrg.org": org._id,
+        'inOrg.org': org._id,
       },
       {
         $pull: {
@@ -153,7 +149,7 @@ const deleteOrg = asyncFunc(async (req, res) => {
           },
         },
       },
-      { session },
+      { session }
     );
 
     await Invite.deleteMany(
@@ -169,29 +165,29 @@ const deleteOrg = asyncFunc(async (req, res) => {
           },
         ],
       },
-      { session },
+      { session }
     );
 
     await Team.deleteMany(
       {
         inOrg: org._id,
       },
-      { session },
+      { session }
     );
 
     await Project.deleteMany(
       {
         inOrg: org._id,
       },
-      { session },
+      { session }
     );
 
     const sections = await Section.find(
       { inProject: { $in: org.projects } },
       null,
-      { session },
+      { session }
     );
-    const sectionIds = sections.map((s) => s._id);
+    const sectionIds = sections.map(s => s._id);
 
     await Task.deleteMany({ inSection: { $in: sectionIds } }, { session });
     await Section.deleteMany({ inProject: { $in: org.projects } }, { session });
@@ -201,13 +197,13 @@ const deleteOrg = asyncFunc(async (req, res) => {
     session.endSession();
     return res
       .status(200)
-      .json(new ApiRes(200, null, "Organization deleted successfully"));
+      .json(new ApiRes(200, null, 'Organization deleted successfully'));
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     throw new ApiError(
       500,
-      "Failed to delete organization due to a server error, Please try again later",
+      'Failed to delete organization due to a server error, Please try again later'
     );
   }
 });
@@ -217,20 +213,20 @@ const inviteMember = asyncFunc(async (req, res) => {
   const org = req.org;
   const invitedBy = req.user;
   if (!email) {
-    throw new ApiError(400, "Email is required");
+    throw new ApiError(400, 'Email is required');
   }
   const user = await User.findOne({ email });
   if (!user) {
     throw new ApiError(
       400,
-      "User with this email does not Exists, make sure that user have an account",
+      'User with this email does not Exists, make sure that user have an account'
     );
   }
   const isMember = user.inOrg.some(
-    (o) => o.org.toString() === org._id.toString(),
+    o => o.org.toString() === org._id.toString()
   );
   if (isMember) {
-    throw new ApiError(400, "This user is already part of the organization");
+    throw new ApiError(400, 'This user is already part of the organization');
   }
   const inviteExist = await Invite.findOne({
     email,
@@ -239,14 +235,14 @@ const inviteMember = asyncFunc(async (req, res) => {
   if (inviteExist) {
     throw new ApiError(
       400,
-      "An invite has already been sent to this email for this organization. Please wait for the user to accept or decline it",
+      'An invite has already been sent to this email for this organization. Please wait for the user to accept or decline it'
     );
   }
   const invite = await Invite.create({
     forOrg: org._id,
     invitedBy: invitedBy._id,
     email,
-    asRoleOf: asRoleOf || "member",
+    asRoleOf: asRoleOf || 'member',
   });
   const inviteLink = `${process.env.APP_URL}/invite/accept/${invite._id}`;
   user.invites.push(invite._id);
@@ -261,7 +257,7 @@ const inviteMember = asyncFunc(async (req, res) => {
           Hello,
         </p>
         <p style="font-size: 16px; color: #333;">
-          <strong>${invitedBy.userName}</strong> has invited you to join the organization <strong>${org.orgName}</strong> as a <strong style="color: #1abc9c;">${asRoleOf || "member"}</strong>.
+          <strong>${invitedBy.userName}</strong> has invited you to join the organization <strong>${org.orgName}</strong> as a <strong style="color: #1abc9c;">${asRoleOf || 'member'}</strong>.
         </p>
         <p style="font-size: 16px; color: #333;">
           Click the button below to accept the invitation:
@@ -286,18 +282,18 @@ const inviteMember = asyncFunc(async (req, res) => {
   });
   return res
     .status(200)
-    .json(new ApiRes(200, invite, "invitation sent successfully"));
+    .json(new ApiRes(200, invite, 'invitation sent successfully'));
 });
 
 const acceptInviteForOrg = asyncFunc(async (req, res) => {
   const user = req.user;
   const { inviteId } = req.params;
   if (!mongoose.Types.ObjectId.isValid(inviteId)) {
-    throw new ApiError(400, "Invalid invite ID");
+    throw new ApiError(400, 'Invalid invite ID');
   }
   const invite = await Invite.findById(inviteId);
   if (!invite) {
-    throw new ApiError(400, "The Invitation is invalid");
+    throw new ApiError(400, 'The Invitation is invalid');
   }
   if (user.email !== invite.email) {
     throw new ApiError(400, `This invitation is only for ${invite.email}`);
@@ -316,7 +312,7 @@ const acceptInviteForOrg = asyncFunc(async (req, res) => {
           },
         },
       },
-      { session },
+      { session }
     );
     const timelineHtml = `<b>${user.userName}</b> has joined the organization as a <i>${invite.asRoleOf}</i>`;
     const org = await Organization.findByIdAndUpdate(
@@ -334,15 +330,15 @@ const acceptInviteForOrg = asyncFunc(async (req, res) => {
           },
         },
       },
-      { new: true, session },
+      { new: true, session }
     ).populate([
       {
-        path: "createdBy",
-        select: "userName email profilePhoto",
+        path: 'createdBy',
+        select: 'userName email profilePhoto',
       },
       {
-        path: "members.member",
-        select: "userName email profilePhoto",
+        path: 'members.member',
+        select: 'userName email profilePhoto',
       },
     ]);
     await session.commitTransaction();
@@ -358,15 +354,15 @@ const acceptInviteForOrg = asyncFunc(async (req, res) => {
           },
           role: invite.asRoleOf,
         },
-        `Invitation accepted successfully for the organization - ${org.orgName} `,
-      ),
+        `Invitation accepted successfully for the organization - ${org.orgName} `
+      )
     );
   } catch (error) {
     await session.commitTransaction();
     session.endSession();
     throw new ApiError(
       500,
-      "Failed to accept invitation due to a server error, Please try again later",
+      'Failed to accept invitation due to a server error, Please try again later'
     );
   }
 });
@@ -375,22 +371,22 @@ const declineInviteForOrg = asyncFunc(async (req, res) => {
   const { inviteId } = req.params;
   const user = req.user;
   if (!mongoose.Types.ObjectId.isValid(inviteId)) {
-    throw new ApiError(400, "Invalid invite ID");
+    throw new ApiError(400, 'Invalid invite ID');
   }
   const invite = await Invite.findById(inviteId);
   if (!invite) {
-    throw new ApiError(400, "The Invitation is invalid");
+    throw new ApiError(400, 'The Invitation is invalid');
   }
   if (user.email !== invite.email) {
     throw new ApiError(
       400,
-      `This invitation is only for ${invite.email} you can't decline this.`,
+      `This invitation is only for ${invite.email} you can't decline this.`
     );
   }
   await Invite.findByIdAndDelete(inviteId);
   return res
     .status(200)
-    .json(new ApiRes(200, null, "Invite declined successfully"));
+    .json(new ApiRes(200, null, 'Invite declined successfully'));
 });
 
 const removeMemberFromOrg = asyncFunc(async (req, res) => {
@@ -398,19 +394,19 @@ const removeMemberFromOrg = asyncFunc(async (req, res) => {
   const org = req.org;
   const user = req.user;
   if (!mongoose.Types.ObjectId.isValid(memberId)) {
-    throw new ApiError(400, "Invalid member ID");
+    throw new ApiError(400, 'Invalid member ID');
   }
   const isMemberInOrg = org.members.some(
-    (m) => m.member.toString() == memberId.toString(),
+    m => m.member.toString() == memberId.toString()
   );
   if (!isMemberInOrg) {
-    throw new ApiError(400, "This member is not part of this Organization");
+    throw new ApiError(400, 'This member is not part of this Organization');
   }
   const isOwner = org.createdBy.toString() == memberId.toString();
   if (isOwner) {
     throw new ApiError(
       400,
-      "This is the owner of Organization you can't remove owner",
+      "This is the owner of Organization you can't remove owner"
     );
   }
   const session = await mongoose.startSession();
@@ -420,13 +416,13 @@ const removeMemberFromOrg = asyncFunc(async (req, res) => {
       {
         inOrg: org._id,
       },
-      { _id: 1 },
+      { _id: 1 }
     ).session(session);
     const orgProjects = await Project.find(
       {
         inOrg: org._id,
       },
-      { _id: 1 },
+      { _id: 1 }
     ).session(session);
     const removedUser = await User.findByIdAndUpdate(
       memberId,
@@ -436,14 +432,14 @@ const removeMemberFromOrg = asyncFunc(async (req, res) => {
             org: org._id,
           },
           inTeams: {
-            team: { $in: orgTeams.map((t) => t._id) },
+            team: { $in: orgTeams.map(t => t._id) },
           },
           inProject: {
-            project: { $in: orgProjects.map((p) => p._id) },
+            project: { $in: orgProjects.map(p => p._id) },
           },
         },
       },
-      { new: true, session },
+      { new: true, session }
     );
     await Team.updateMany(
       { inOrg: org._id },
@@ -454,7 +450,7 @@ const removeMemberFromOrg = asyncFunc(async (req, res) => {
           },
         },
       },
-      { session },
+      { session }
     );
     await Project.updateMany(
       { inOrg: org._id },
@@ -465,7 +461,7 @@ const removeMemberFromOrg = asyncFunc(async (req, res) => {
           },
         },
       },
-      { session },
+      { session }
     );
     const timelineHtml = `<b>${user.userName}</b> has removed <b>${removedUser.userName}</b> from the organization <strong>${org.orgName}</strong>.`;
     const updatedOrg = await Organization.findByIdAndUpdate(
@@ -482,15 +478,15 @@ const removeMemberFromOrg = asyncFunc(async (req, res) => {
           },
         },
       },
-      { new: true, session },
+      { new: true, session }
     ).populate([
       {
-        path: "members.member",
-        select: "userName email profilePhoto",
+        path: 'members.member',
+        select: 'userName email profilePhoto',
       },
       {
-        path: "createdBy",
-        select: "userName email profilePhoto",
+        path: 'createdBy',
+        select: 'userName email profilePhoto',
       },
     ]);
     sendEmail({
@@ -527,15 +523,15 @@ const removeMemberFromOrg = asyncFunc(async (req, res) => {
         new ApiRes(
           200,
           updatedOrg,
-          "Member removed successfully from the organization and all associated teams/projects",
-        ),
+          'Member removed successfully from the organization and all associated teams/projects'
+        )
       );
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     throw new ApiError(
       500,
-      "Failed to remove member from the organization due to a server error, Please try again later.",
+      'Failed to remove member from the organization due to a server error, Please try again later.'
     );
   }
 });
@@ -546,56 +542,56 @@ const changeOrgMemberRole = asyncFunc(async (req, res) => {
   const { memberId } = req.params;
   const { asRoleOf } = req.body;
   if (!mongoose.Types.ObjectId.isValid(memberId)) {
-    throw new ApiError(400, "Invalid member ID");
+    throw new ApiError(400, 'Invalid member ID');
   }
   const isOwner = org.createdBy.toString() === memberId.toString();
   if (isOwner) {
     throw new ApiError(
       400,
-      "This member is owner of Organization you can't change the role for owner",
+      "This member is owner of Organization you can't change the role for owner"
     );
   }
   const member = org.members.find(
-    (m) => m.member.toString() === memberId.toString(),
+    m => m.member.toString() === memberId.toString()
   );
   await org.populate({
-    path: "members.member",
-    select: "userName",
+    path: 'members.member',
+    select: 'userName',
   });
   if (!member) {
-    throw new ApiError(400, "This member is not part of this Organization");
+    throw new ApiError(400, 'This member is not part of this Organization');
   }
-  const validRoles = ["admin", "moderator", "leader", "member", "viewer"];
+  const validRoles = ['admin', 'moderator', 'leader', 'member', 'viewer'];
   if (!validRoles.includes(asRoleOf)) {
-    throw new ApiError(400, "Invalid role");
+    throw new ApiError(400, 'Invalid role');
   }
   await User.updateOne(
-    { _id: memberId, "inOrg.org": org._id },
+    { _id: memberId, 'inOrg.org': org._id },
     {
       $set: {
-        "inOrg.$.role": asRoleOf,
+        'inOrg.$.role': asRoleOf,
       },
-    },
+    }
   );
   const oldRole = member.role;
   member.role = asRoleOf;
-  org.markModified("members");
+  org.markModified('members');
   const timelineHtml = `<b>${user.userName}</b> changed the role of <strong>${member.member.userName}</strong> from <em>${oldRole}</em> to <em>${asRoleOf}</em>.`;
   org.timeline.push({
     text: timelineHtml,
   });
   await org.save();
   const updatedOrg = await org.populate({
-    path: "members.member",
-    select: "userName email profilePhoto",
+    path: 'members.member',
+    select: 'userName email profilePhoto',
   });
 
   const updatedMember = updatedOrg.members.find(
-    (m) => m.member._id.toString() === memberId,
+    m => m.member._id.toString() === memberId
   );
 
   if (!updatedMember) {
-    throw new ApiError(500, "Failed to fetch updated member");
+    throw new ApiError(500, 'Failed to fetch updated member');
   }
 
   const cleanedMember = {
@@ -612,23 +608,23 @@ const changeOrgMemberRole = asyncFunc(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiRes(200, cleanedMember, "Member role updated successfully"));
+    .json(new ApiRes(200, cleanedMember, 'Member role updated successfully'));
 });
 
 const leaveOrg = asyncFunc(async (req, res) => {
   const org = req.org;
   const user = req.user;
   const isMemberInOrg = org.members.some(
-    (m) => m.member.toString() == user._id.toString(),
+    m => m.member.toString() == user._id.toString()
   );
   if (!isMemberInOrg) {
-    throw new ApiError(400, "You are not a part of this organization");
+    throw new ApiError(400, 'You are not a part of this organization');
   }
   const isOwner = org.createdBy.toString() == user._id.toString();
   if (isOwner) {
     throw new ApiError(
       400,
-      "You can not leave the organization as you are the owner",
+      'You can not leave the organization as you are the owner'
     );
   }
   const session = await mongoose.startSession();
@@ -638,13 +634,13 @@ const leaveOrg = asyncFunc(async (req, res) => {
       {
         inOrg: org._id,
       },
-      { _id: 1 },
+      { _id: 1 }
     ).session(session);
     const orgProjects = await Project.find(
       {
         inOrg: org._id,
       },
-      { _id: 1 },
+      { _id: 1 }
     ).session(session);
     const timelineHtml = `<b>${user.userName}</b> left the organization`;
     await Organization.findByIdAndUpdate(
@@ -661,7 +657,7 @@ const leaveOrg = asyncFunc(async (req, res) => {
           },
         },
       },
-      { session },
+      { session }
     );
     await User.findByIdAndUpdate(
       user._id,
@@ -671,14 +667,14 @@ const leaveOrg = asyncFunc(async (req, res) => {
             org: org._id,
           },
           inTeams: {
-            team: { $in: orgTeams.map((t) => t._id) },
+            team: { $in: orgTeams.map(t => t._id) },
           },
           inProject: {
-            project: { $in: orgProjects.map((p) => p._id) },
+            project: { $in: orgProjects.map(p => p._id) },
           },
         },
       },
-      { session },
+      { session }
     );
     await Team.updateMany(
       { inOrg: org._id },
@@ -689,7 +685,7 @@ const leaveOrg = asyncFunc(async (req, res) => {
           },
         },
       },
-      { session },
+      { session }
     );
     await Project.updateMany(
       { inOrg: org._id },
@@ -700,7 +696,7 @@ const leaveOrg = asyncFunc(async (req, res) => {
           },
         },
       },
-      { session },
+      { session }
     );
     await session.commitTransaction();
     session.endSession();
@@ -710,15 +706,15 @@ const leaveOrg = asyncFunc(async (req, res) => {
         new ApiRes(
           200,
           null,
-          "You have successfully left the organization and all associated teams/projects",
-        ),
+          'You have successfully left the organization and all associated teams/projects'
+        )
       );
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     throw new ApiError(
       500,
-      "Failed to leave organization due to a server error, Please try again later.",
+      'Failed to leave organization due to a server error, Please try again later.'
     );
   }
 });
@@ -728,20 +724,20 @@ const transferOwnershipOfOrg = asyncFunc(async (req, res) => {
   const { memberId } = req.params;
   const user = req.user;
   if (!mongoose.Types.ObjectId.isValid(memberId)) {
-    throw new ApiError(400, "Invalid member ID");
+    throw new ApiError(400, 'Invalid member ID');
   }
   const isOwner = org.createdBy.toString() == user._id.toString();
   if (!isOwner) {
-    throw new ApiError(400, "You are not the owner of this organization");
+    throw new ApiError(400, 'You are not the owner of this organization');
   }
   if (memberId.toString() == org.createdBy.toString()) {
-    throw new ApiError(400, "This is alredy owner of this Organization");
+    throw new ApiError(400, 'This is alredy owner of this Organization');
   }
   const isMemberInOrg = org.members.some(
-    (m) => m.member.toString() == memberId.toString(),
+    m => m.member.toString() == memberId.toString()
   );
   if (!isMemberInOrg) {
-    throw new ApiError(400, "This member not part of this Organization");
+    throw new ApiError(400, 'This member not part of this Organization');
   }
 
   await User.bulkWrite([
@@ -749,11 +745,11 @@ const transferOwnershipOfOrg = asyncFunc(async (req, res) => {
       updateOne: {
         filter: {
           _id: memberId,
-          "inOrg.org": org._id,
+          'inOrg.org': org._id,
         },
         update: {
           $set: {
-            "inOrg.$.role": "admin",
+            'inOrg.$.role': 'admin',
           },
         },
       },
@@ -762,11 +758,11 @@ const transferOwnershipOfOrg = asyncFunc(async (req, res) => {
       updateOne: {
         filter: {
           _id: user._id,
-          "inOrg.org": org._id,
+          'inOrg.org': org._id,
         },
         update: {
           $set: {
-            "inOrg.$.role": "moderator",
+            'inOrg.$.role': 'moderator',
           },
         },
       },
@@ -774,13 +770,13 @@ const transferOwnershipOfOrg = asyncFunc(async (req, res) => {
   ]);
 
   org.createdBy = memberId;
-  org.members = org.members.map((m) => {
+  org.members = org.members.map(m => {
     const memberIdStr = m.member.toString();
     if (memberIdStr === memberId.toString()) {
-      return { ...m._doc, role: "admin" };
+      return { ...m._doc, role: 'admin' };
     }
     if (memberIdStr === user._id.toString()) {
-      return { ...m._doc, role: "moderator" };
+      return { ...m._doc, role: 'moderator' };
     }
     return m._doc;
   });
@@ -818,17 +814,17 @@ const transferOwnershipOfOrg = asyncFunc(async (req, res) => {
   });
   const populatedOrg = await org.populate([
     {
-      path: "createdBy",
-      select: "userName email profilePhoto",
+      path: 'createdBy',
+      select: 'userName email profilePhoto',
     },
     {
-      path: "members.member",
-      select: "userName email profilePhoto",
+      path: 'members.member',
+      select: 'userName email profilePhoto',
     },
   ]);
   return res
     .status(200)
-    .json(new ApiRes(200, populatedOrg, "Ownership successfully transferred"));
+    .json(new ApiRes(200, populatedOrg, 'Ownership successfully transferred'));
 });
 
 export {

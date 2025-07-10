@@ -12,6 +12,8 @@ import useTeam from './team/useTeam';
 import useProject from './project/useProject';
 import useSection from './P-section/useSection';
 import useTask from './task/useTask';
+import getAssignedTasks from './task/getAssignedTasks';
+import getAssignedTasksToTeam from './team/getAssignedTasksToTeam';
 
 export {
   useLogin,
@@ -28,4 +30,6 @@ export {
   useProject,
   useSection,
   useTask,
+  getAssignedTasks,
+  getAssignedTasksToTeam,
 };

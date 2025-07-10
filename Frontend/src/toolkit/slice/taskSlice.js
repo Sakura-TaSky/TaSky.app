@@ -26,11 +26,6 @@ const taskSlice = createSlice({
   },
 });
 
-export const {
-  setTask,
-  setTaskErrorMessage,
-  setTaskLoading,
-  setTaskResMessage,
-} = taskSlice.actions;
+export const { setTask, setTaskErrorMessage, setTaskLoading, setTaskResMessage } = taskSlice.actions;
 
 export default taskSlice.reducer;

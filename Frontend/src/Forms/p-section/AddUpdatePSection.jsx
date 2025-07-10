@@ -14,21 +14,14 @@ import {
 } from '@/global';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 
-const AddUpdatePSection = ({
-  setShowSectionAddForm,
-  forSectionCreate,
-  setShowUpdateSectionForm,
-}) => {
+const AddUpdatePSection = ({ setShowSectionAddForm, forSectionCreate, setShowUpdateSectionForm }) => {
   const { register, handleSubmit } = useForm();
 
-  const { section, sectionErrorMessage, sectionLoading } = useSelector(
-    state => state.section
-  );
+  const { section, sectionErrorMessage, sectionLoading } = useSelector(state => state.section);
 
   const projectSectionFromRef = useRef();
 
-  const [showDeleteProjectSectionPopup, setShowDeleteProjectSectionPopup] =
-    useState(false);
+  const [showDeleteProjectSectionPopup, setShowDeleteProjectSectionPopup] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -47,17 +40,22 @@ const AddUpdatePSection = ({
   });
 
   const handleUpdateProjectSection = async data => {
-    if (forSectionCreate) {
+    if (forSectionCreate && data.sectionName) {
       const success = await createSection(data);
       if (success) {
         dispatch(setSectionErrorMessage(''));
         setShowSectionAddForm(false);
       }
     } else {
-      const success = await updateSection(data, section?._id);
-      if (success) {
-        dispatch(setSectionErrorMessage(''));
-        setShowUpdateSectionForm(false);
+      if (data) {
+        const success = await updateSection(data, section?._id);
+        if (success) {
+          dispatch(setSectionErrorMessage(''));
+          setShowUpdateSectionForm(false);
+        }
+      } else {
+        dispatch(setSectionErrorMessage('one filed is required'));
+        return;
       }
     }
   };
@@ -103,9 +101,7 @@ const AddUpdatePSection = ({
         <div className='p-6 w-[330px] bg-white dark:bg-zinc-950 border flex flex-col gap-3 border-zinc-500/30 rounded-lg shadow-md'>
           <div className='flex flex-col items-cente gap-2'>
             <span className='text-xl break-all'>
-              {forSectionCreate
-                ? 'Create Project Section'
-                : `Update Project Section  - ${section?.sectionName}`}
+              {forSectionCreate ? 'Create Project Section' : `Update Project Section  - ${section?.sectionName}`}
             </span>
             <span className='text-[15px] text-zinc-500'>
               {forSectionCreate
@@ -141,16 +137,9 @@ const AddUpdatePSection = ({
                 inputClassName='bg-zinc-500/5 focus:border-blue-500/30 focus:bg-blue-500/10 outline-0 placeholder:text-zinc-500 placeholder:font-light font-medium p-2 rounded border border-zinc-300 dark:border-zinc-800'
               />
             </>
-            {sectionErrorMessage && (
-              <span className='ml-0.5 text-sm text-red-500'>
-                {sectionErrorMessage}
-              </span>
-            )}
+            {sectionErrorMessage && <span className='ml-0.5 text-sm text-red-500'>{sectionErrorMessage}</span>}
             <div className='flex mt-4 w-full justify-center'>
-              <BlueBtn
-                isLoading={sectionLoading}
-                text={forSectionCreate ? 'create' : 'Update'}
-              />
+              <BlueBtn isLoading={sectionLoading} text={forSectionCreate ? 'create' : 'Update'} />
             </div>
           </form>
         </div>

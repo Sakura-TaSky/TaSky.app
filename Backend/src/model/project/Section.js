@@ -1,10 +1,10 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const sectionSchema = new mongoose.Schema(
   {
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       required: true,
     },
     sectionName: {
@@ -15,28 +15,28 @@ const sectionSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
-      default: "",
+      default: '',
     },
     assignedToTeam: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Team",
+        ref: 'Team',
       },
     ],
     assignedToMember: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: 'User',
       },
     ],
     inProject: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Project",
+      ref: 'Project',
     },
     status: {
       type: String,
-      enum: ["New Added", "In Progress", "Under Review", "Completed"],
-      default: "New Added",
+      enum: ['New Added', 'In Progress', 'Under Review', 'Completed'],
+      default: 'New Added',
     },
     deadline: {
       type: Date,
@@ -44,15 +44,15 @@ const sectionSchema = new mongoose.Schema(
     tasks: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Task",
+        ref: 'Task',
       },
     ],
   },
   {
     timestamps: true,
-  },
+  }
 );
 
-const Section = mongoose.model("Section", sectionSchema);
+const Section = mongoose.model('Section', sectionSchema);
 
 export default Section;

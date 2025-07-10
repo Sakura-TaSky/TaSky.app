@@ -42,9 +42,7 @@ const TeamMenu = () => {
                     : 'hover:bg-zinc-500/10'
                 } flex smooth items-center line-clamp-1`}
               >
-                <span className='w-[60%] overflow-hidden line-clamp-1'>
-                  {t?.teamName}
-                </span>
+                <span className='w-[60%] overflow-hidden line-clamp-1'>{t?.teamName}</span>
                 <AvatarGroup
                   key={t?._id}
                   groupKey={t?._id}
@@ -55,19 +53,13 @@ const TeamMenu = () => {
                 />
               </Link>
             ))}
-          <div
-            onClick={() => setShowTeamCreateForm(true)}
-            className='flex w-full justify-center m-2 text-zinc-500'
-          >
+          <div onClick={() => setShowTeamCreateForm(true)} className='flex w-full justify-center m-2 text-zinc-500'>
             <Btn text='Create Team' />
           </div>
         </>
       )}
       {showTeamCreateForm && (
-        <TeamUpdate
-          setShowTeamCreateForm={setShowTeamCreateForm}
-          forTeamCreation={showTeamCreateForm}
-        />
+        <TeamUpdate setShowTeamCreateForm={setShowTeamCreateForm} forTeamCreation={showTeamCreateForm} />
       )}
     </div>
   );

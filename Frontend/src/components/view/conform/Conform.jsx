@@ -47,12 +47,7 @@ const Conform = ({
             required={true}
           />
         )}
-        {error && (
-          <span className='text-sm text-red-500 items-start mt-3'>
-            {' '}
-            {error}{' '}
-          </span>
-        )}
+        {error && <span className='text-sm text-red-500 items-start mt-3'> {error} </span>}
         <div className='flex gap-2 self-end mt-3'>
           <>
             <Btn onClick={onCancel} text={cancelText} />

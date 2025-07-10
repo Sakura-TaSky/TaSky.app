@@ -1,18 +1,18 @@
-import User from "../model/User.js";
-import { asyncFunc } from "../utils/asyncFunc.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiRes } from "../utils/ApiRes.js";
-import { uploadOnCloudinary } from "../service/Cloudinary.js";
-import crypto from "crypto";
-import { generateTokens } from "../utils/Token.js";
-import { getCookieOptions } from "../const.js";
-import { sendEmail } from "../service/SendEmail.js";
-import { redisPub } from "../config/redis.js";
+import User from '../model/User.js';
+import { asyncFunc } from '../utils/asyncFunc.js';
+import { ApiError } from '../utils/ApiError.js';
+import { ApiRes } from '../utils/ApiRes.js';
+import { uploadOnCloudinary } from '../service/Cloudinary.js';
+import crypto from 'crypto';
+import { generateTokens } from '../utils/Token.js';
+import { getCookieOptions } from '../const.js';
+import { sendEmail } from '../service/SendEmail.js';
+import { redisPub } from '../config/redis.js';
 
 const getUser = asyncFunc(async (req, res) => {
   const userId = req.user._id;
   if (!userId) {
-    throw new ApiError(401, "Unauthorized");
+    throw new ApiError(401, 'Unauthorized');
   }
   // const cacheKey = `user:${userId.toString()}`
   // const cached = await redisPub.get(cacheKey)
@@ -23,19 +23,19 @@ const getUser = asyncFunc(async (req, res) => {
   //   );
   // }
   const user = await User.findById(userId)
-    .select("-password -refreshToken -otp")
+    .select('-password -refreshToken -otp')
     .populate({
-      path: "inOrg.org",
-      sselect: "orgName",
+      path: 'inOrg.org',
+      sselect: 'orgName',
     });
   if (!user) {
-    throw new ApiError(404, "User not found");
+    throw new ApiError(404, 'User not found');
   }
   if (!user.isVerified) {
     return res.status(403).json({
       success: false,
       needsVerification: true,
-      message: "Email is not verified. Please verify your email.",
+      message: 'Email is not verified. Please verify your email.',
       userEmail: user.email,
     });
   }
@@ -44,31 +44,31 @@ const getUser = asyncFunc(async (req, res) => {
   await user.save();
   const populatedUser = await user.populate([
     {
-      path: "inTeams.team",
-      select: "teamName",
+      path: 'inTeams.team',
+      select: 'teamName',
     },
     {
-      path: "inProject.project",
-      select: "projectName",
+      path: 'inProject.project',
+      select: 'projectName',
     },
     {
-      path: "inOrg.org",
-      select: "orgName orgProfilePhoto",
+      path: 'inOrg.org',
+      select: 'orgName orgProfilePhoto',
     },
     {
-      path: "invites",
+      path: 'invites',
       populate: [
         {
-          path: "forOrg",
-          select: "orgName orgProfilePhoto",
+          path: 'forOrg',
+          select: 'orgName orgProfilePhoto',
         },
         {
-          path: "forTeam",
-          select: "teamName",
+          path: 'forTeam',
+          select: 'teamName',
         },
         {
-          path: "invitedBy",
-          select: "userName profilePhoto email",
+          path: 'invitedBy',
+          select: 'userName profilePhoto email',
         },
       ],
     },
@@ -76,19 +76,19 @@ const getUser = asyncFunc(async (req, res) => {
   // await redisPub.set(cacheKey, JSON.stringify(populatedUser), 'EX', 10800);
   return res
     .status(200)
-    .cookie("accessToken", accessToken, getCookieOptions("access"))
-    .cookie("refreshToken", refreshToken, getCookieOptions("refresh"))
-    .json(new ApiRes(200, populatedUser, "User authenticated successfully"));
+    .cookie('accessToken', accessToken, getCookieOptions('access'))
+    .cookie('refreshToken', refreshToken, getCookieOptions('refresh'))
+    .json(new ApiRes(200, populatedUser, 'User authenticated successfully'));
 });
 
 const register = asyncFunc(async (req, res) => {
   const { userName, email, password } = req.body;
   if (!userName || !email || !password) {
-    throw new ApiError(400, "Please fill all the required information");
+    throw new ApiError(400, 'Please fill all the required information');
   }
   const existingUser = await User.findOne({ email });
   if (existingUser && existingUser.isVerified) {
-    throw new ApiError(409, "User already exists with this email");
+    throw new ApiError(409, 'User already exists with this email');
   }
   if (existingUser) {
     return res
@@ -97,8 +97,8 @@ const register = asyncFunc(async (req, res) => {
         new ApiRes(
           400,
           { userId: existingUser._id },
-          "User already exists with this Email",
-        ),
+          'User already exists with this Email'
+        )
       );
   }
   const profilePhotoUrl = req.file?.path;
@@ -121,7 +121,7 @@ const register = asyncFunc(async (req, res) => {
   });
   sendEmail({
     to: email,
-    subject: "Verify your Email - OTP Code",
+    subject: 'Verify your Email - OTP Code',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; background: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0;">
         <h2 style="color: #333;">Hello ${userName},</h2>
@@ -143,7 +143,7 @@ const register = asyncFunc(async (req, res) => {
   });
   const createdUser = await User.findById(user._id);
   if (!createdUser) {
-    throw new ApiError(500, "Something Went Wrong while createing user");
+    throw new ApiError(500, 'Something Went Wrong while createing user');
   }
   return res
     .status(201)
@@ -151,90 +151,90 @@ const register = asyncFunc(async (req, res) => {
       new ApiRes(
         201,
         { userEmail: createdUser.email },
-        "User register successfuly, OTP has been sent to your email",
-      ),
+        'User register successfuly, OTP has been sent to your email'
+      )
     );
 });
 
 const verifyOtp = asyncFunc(async (req, res) => {
   const { otpCode, email } = req.body;
   if (!email || !otpCode) {
-    throw new ApiError(400, "Email and OTP code are required");
+    throw new ApiError(400, 'Email and OTP code are required');
   }
   const user = await User.findOne({ email });
   if (!user) {
-    throw new ApiError(404, "user not found");
+    throw new ApiError(404, 'user not found');
   }
   if (!user.otp) {
-    throw new ApiError(404, "OTP not set");
+    throw new ApiError(404, 'OTP not set');
   }
   if (user.isVerified) {
-    throw new ApiError(400, "user is already verifyied");
+    throw new ApiError(400, 'user is already verifyied');
   }
   if (user.otp.code !== otpCode || new Date() > new Date(user.otp.expiresAt)) {
-    throw new ApiError(400, "Invalid OTP");
+    throw new ApiError(400, 'Invalid OTP');
   }
   user.isVerified = true;
   user.otp = undefined;
   await user.save();
   const { accessToken, refreshToken } = await generateTokens(user._id);
   const logedinUser = await User.findById(user._id)
-    .select("-password -refreshToken -otp")
+    .select('-password -refreshToken -otp')
     .populate([
       {
-        path: "inTeams.team",
-        select: "teamName",
+        path: 'inTeams.team',
+        select: 'teamName',
       },
       {
-        path: "inProject.project",
-        select: "projectName",
+        path: 'inProject.project',
+        select: 'projectName',
       },
       {
-        path: "inOrg.org",
-        select: "orgName orgProfilePhoto",
+        path: 'inOrg.org',
+        select: 'orgName orgProfilePhoto',
       },
       {
-        path: "invites",
+        path: 'invites',
         populate: [
           {
-            path: "forOrg",
-            select: "orgName orgProfilePhoto",
+            path: 'forOrg',
+            select: 'orgName orgProfilePhoto',
           },
           {
-            path: "forTeam",
-            select: "teamName",
+            path: 'forTeam',
+            select: 'teamName',
           },
           {
-            path: "invitedBy",
-            select: "userName profilePhoto email",
+            path: 'invitedBy',
+            select: 'userName profilePhoto email',
           },
         ],
       },
     ]);
   return res
     .status(200)
-    .cookie("accessToken", accessToken, getCookieOptions("access"))
-    .cookie("refreshToken", refreshToken, getCookieOptions("refresh"))
+    .cookie('accessToken', accessToken, getCookieOptions('access'))
+    .cookie('refreshToken', refreshToken, getCookieOptions('refresh'))
     .json(
       new ApiRes(
         200,
         logedinUser,
-        "Email successfully verified. You can now log in.",
-      ),
+        'Email successfully verified. You can now log in.'
+      )
     );
 });
 
 const resendOtp = asyncFunc(async (req, res) => {
   const { email } = req.body;
   if (!email) {
-    throw new ApiError(400, "Email is required");
+    throw new ApiError(400, 'Email is required');
   }
   const user = await User.findOne({ email });
   if (!user) {
-    throw new ApiError(404, "User with this Email not found");
+    throw new ApiError(404, 'User with this Email not found');
   }
   if (user.isVerified) {
-    throw new ApiError(400, "User is already verified");
+    throw new ApiError(400, 'User is already verified');
   }
   const otpCode = crypto.randomInt(100000, 1000000).toString();
   const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -245,7 +245,7 @@ const resendOtp = asyncFunc(async (req, res) => {
   await user.save();
   await sendEmail({
     to: email,
-    subject: "Verify your Email - OTP Code",
+    subject: 'Verify your Email - OTP Code',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; background: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0;">
         <h2 style="color: #333;">Hello ${user.userName},</h2>
@@ -267,69 +267,69 @@ const resendOtp = asyncFunc(async (req, res) => {
   });
   return res
     .status(200)
-    .json(new ApiRes(200, null, "OTP has been resent to your email"));
+    .json(new ApiRes(200, null, 'OTP has been resent to your email'));
 });
 
 const login = asyncFunc(async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password) {
-    throw new ApiError(400, "Please fill all the required information");
+    throw new ApiError(400, 'Please fill all the required information');
   }
   const userExists = await User.findOne({ email });
   if (!userExists) {
-    throw new ApiError(400, "User with this email dose not exists");
+    throw new ApiError(400, 'User with this email dose not exists');
   }
   const isPasswordValid = await userExists.isPasswordCorrect(password);
   if (!isPasswordValid) {
-    throw new ApiError(400, "Invalid Password");
+    throw new ApiError(400, 'Invalid Password');
   }
   if (!userExists.isVerified) {
     return res.status(403).json({
       success: false,
       needsVerification: true,
-      message: "Email is not verified. Please verify your email.",
+      message: 'Email is not verified. Please verify your email.',
       userEmail: userExists.email,
     });
   }
   const { accessToken, refreshToken } = await generateTokens(userExists._id);
   const logedinUser = await User.findById(userExists._id)
-    .select("-password -refreshToken -otp")
+    .select('-password -refreshToken -otp')
     .populate([
       {
-        path: "inTeams.team",
-        select: "teamName",
+        path: 'inTeams.team',
+        select: 'teamName',
       },
       {
-        path: "inProject.project",
-        select: "projectName",
+        path: 'inProject.project',
+        select: 'projectName',
       },
       {
-        path: "inOrg.org",
-        select: "orgName orgProfilePhoto",
+        path: 'inOrg.org',
+        select: 'orgName orgProfilePhoto',
       },
       {
-        path: "invites",
+        path: 'invites',
         populate: [
           {
-            path: "forOrg",
-            select: "orgName orgProfilePhoto",
+            path: 'forOrg',
+            select: 'orgName orgProfilePhoto',
           },
           {
-            path: "forTeam",
-            select: "teamName",
+            path: 'forTeam',
+            select: 'teamName',
           },
           {
-            path: "invitedBy",
-            select: "userName profilePhoto email",
+            path: 'invitedBy',
+            select: 'userName profilePhoto email',
           },
         ],
       },
     ]);
   return res
     .status(201)
-    .cookie("accessToken", accessToken, getCookieOptions("access"))
-    .cookie("refreshToken", refreshToken, getCookieOptions("refresh"))
-    .json(new ApiRes(201, logedinUser, "User logged in successfuly"));
+    .cookie('accessToken', accessToken, getCookieOptions('access'))
+    .cookie('refreshToken', refreshToken, getCookieOptions('refresh'))
+    .json(new ApiRes(201, logedinUser, 'User logged in successfuly'));
 });
 
 const updateUser = asyncFunc(async (req, res) => {
@@ -347,7 +347,7 @@ const updateUser = asyncFunc(async (req, res) => {
     if (!profilePhotoFromCloudinary) {
       throw new ApiError(
         500,
-        "Profile picture upload failed. Please try again",
+        'Profile picture upload failed. Please try again'
       );
     }
     updateData.profilePhoto = profilePhotoFromCloudinary.url;
@@ -355,14 +355,14 @@ const updateUser = asyncFunc(async (req, res) => {
   const updatedUser = await User.findByIdAndUpdate(user._id, updateData, {
     new: true,
   })
-    .select("-password -refreshToken")
+    .select('-password -refreshToken')
     .populate({
-      path: "inOrg.org",
-      sselect: "orgName",
+      path: 'inOrg.org',
+      sselect: 'orgName',
     });
   return res
     .status(200)
-    .json(new ApiRes(200, updatedUser, "User details updated successfully"));
+    .json(new ApiRes(200, updatedUser, 'User details updated successfully'));
 });
 
 const logOut = asyncFunc(async (req, res) => {
@@ -374,19 +374,19 @@ const logOut = asyncFunc(async (req, res) => {
   });
   return res
     .status(200)
-    .clearCookie("accessToken", getCookieOptions("access"))
-    .clearCookie("refreshToken", getCookieOptions("refresh"))
-    .json(new ApiRes(200, null, "User logout successfully"));
+    .clearCookie('accessToken', getCookieOptions('access'))
+    .clearCookie('refreshToken', getCookieOptions('refresh'))
+    .json(new ApiRes(200, null, 'User logout successfully'));
 });
 
 const resetPasswordOtp = asyncFunc(async (req, res) => {
   const { email } = req.body;
   if (!email) {
-    throw new ApiError(400, "Email not found");
+    throw new ApiError(400, 'Email not found');
   }
   const user = await User.findOne({ email });
   if (!user) {
-    throw new ApiError(404, "User not found with this email");
+    throw new ApiError(404, 'User not found with this email');
   }
   const otpCode = crypto.randomInt(100000, 1000000).toString();
   const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
@@ -397,7 +397,7 @@ const resetPasswordOtp = asyncFunc(async (req, res) => {
   await user.save();
   await sendEmail({
     to: email,
-    subject: "Reset Your Password - OTP",
+    subject: 'Reset Your Password - OTP',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 24px; background-color: #f9f9f9; border-radius: 8px; border: 1px solid #e0e0e0;">
         <h2 style="color: #333333;">🔐 Reset Your Password</h2>
@@ -426,35 +426,35 @@ const resetPasswordOtp = asyncFunc(async (req, res) => {
 const forgotPassword = asyncFunc(async (req, res) => {
   const { otpCode, password, email } = req.body;
   if (!email) {
-    throw new ApiError(400, "email is required");
+    throw new ApiError(400, 'email is required');
   }
   const user = await User.findOne({ email });
   if (!user) {
-    throw new ApiError(404, "User not found with this email");
+    throw new ApiError(404, 'User not found with this email');
   }
   if (!otpCode || !password) {
-    throw new ApiError(400, "OTP and new password are required");
+    throw new ApiError(400, 'OTP and new password are required');
   }
   if (!user.resetPasswordOtp) {
     throw new ApiError(
       400,
-      "No OTP found. please try again for reset password",
+      'No OTP found. please try again for reset password'
     );
   }
   if (new Date() > new Date(user.resetPasswordOtp.expiresAt)) {
     user.resetPasswordOtp = undefined;
     await user.save();
-    throw new ApiError(400, "OTP expired");
+    throw new ApiError(400, 'OTP expired');
   }
   if (user.resetPasswordOtp.code !== otpCode) {
-    throw new ApiError(400, "Invalid OTP");
+    throw new ApiError(400, 'Invalid OTP');
   }
   user.password = password;
   user.resetPasswordOtp = undefined;
   await user.save();
   return res
     .status(200)
-    .json(new ApiRes(200, null, "Password reset successfully"));
+    .json(new ApiRes(200, null, 'Password reset successfully'));
 });
 
 export {

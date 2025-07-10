@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
+import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 
 const userSchema = new mongoose.Schema(
   {
@@ -27,12 +27,12 @@ const userSchema = new mongoose.Schema(
       {
         team: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Team",
+          ref: 'Team',
         },
         role: {
           type: String,
-          enum: ["admin", "moderator", "leader", "member", "viewer"],
-          default: "member",
+          enum: ['admin', 'moderator', 'leader', 'member', 'viewer'],
+          default: 'member',
         },
       },
     ],
@@ -40,12 +40,12 @@ const userSchema = new mongoose.Schema(
       {
         project: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Project",
+          ref: 'Project',
         },
         role: {
           type: String,
-          enum: ["admin", "moderator", "leader", "member", "viewer"],
-          default: "member",
+          enum: ['admin', 'moderator', 'leader', 'member', 'viewer'],
+          default: 'member',
         },
       },
     ],
@@ -53,19 +53,19 @@ const userSchema = new mongoose.Schema(
       {
         org: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Organization",
+          ref: 'Organization',
         },
         role: {
           type: String,
-          enum: ["admin", "moderator", "leader", "member", "viewer"],
-          default: "member",
+          enum: ['admin', 'moderator', 'leader', 'member', 'viewer'],
+          default: 'member',
         },
       },
     ],
     invites: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Invite",
+        ref: 'Invite',
       },
     ],
     otp: {
@@ -97,11 +97,11 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
@@ -120,7 +120,7 @@ userSchema.methods.generateAccessToken = function () {
     process.env.ACCESS_TOKEN_SECRET,
     {
       expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
-    },
+    }
   );
 };
 
@@ -132,10 +132,10 @@ userSchema.methods.generateRefreshToken = function () {
     process.env.REFRESH_TOKEN_SECRET,
     {
       expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
-    },
+    }
   );
 };
 
-const User = mongoose.model("User", userSchema);
+const User = mongoose.model('User', userSchema);
 
 export default User;

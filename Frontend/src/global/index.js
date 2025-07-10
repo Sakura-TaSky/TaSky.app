@@ -33,7 +33,8 @@ export { ProfilePopup, UpdateUser };
 import { ProjectSection } from '@/components';
 import { Task } from '../components';
 import { ProjectTeam } from '../components';
-export { ProjectSection, Task, ProjectTeam };
+import { AddTaskBtn } from '../components';
+export { ProjectSection, Task, ProjectTeam, AddTaskBtn };
 //sidebar
 import { OrgSelect, ProfileIcon, TeamMenu, ProjectMenu } from '../components';
 export { OrgSelect, ProfileIcon, TeamMenu, ProjectMenu };
@@ -49,10 +50,7 @@ export { OrgTimeline };
 
 // context
 //Notifier
-import {
-  NotifierProvider,
-  useNotifier,
-} from '../context/Notifier/context/NotifierContext';
+import { NotifierProvider, useNotifier } from '../context/Notifier/context/NotifierContext';
 import NotifierList from '../context/Notifier/NotifierList';
 
 export { NotifierProvider, useNotifier, NotifierList };
@@ -74,13 +72,15 @@ import ProjectUpdate from '@/Forms/project/Project-Update';
 import ProjectAddMember from '@/Forms/project/Project-AddMember';
 import ProjectAddTeam from '@/Forms/project/Project-AddTeam';
 export { ProjectUpdate, ProjectAddMember, ProjectAddTeam };
+//task
+import TaskForm from '@/Forms/Task/TaskForm';
+export { TaskForm };
 //team
 import TeamUpdate from '@/Forms/team/Team-Update';
 import TeamAddMember from '@/Forms/team/Team-AddMember';
 export { TeamUpdate, TeamAddMember };
 
 // hooks
-//auth
 import {
   useTask,
   useSection,
@@ -96,6 +96,8 @@ import {
   useGetResetPassOtp,
   useResetPassword,
   useUpadteUser,
+  getAssignedTasks,
+  getAssignedTasksToTeam,
 } from '../hooks';
 export {
   useLogin,
@@ -112,6 +114,8 @@ export {
   useProject,
   useSection,
   useTask,
+  getAssignedTasks,
+  getAssignedTasksToTeam,
 };
 
 // layouts
@@ -137,36 +141,15 @@ import {
   setAppLoading,
   updateUserProfile,
 } from '../toolkit/slice/authSlice';
-export {
-  setUser,
-  setAuthLoading,
-  logoutUser,
-  setErrorMessage,
-  setResMessage,
-  setAppLoading,
-  updateUserProfile,
-};
+export { setUser, setAuthLoading, logoutUser, setErrorMessage, setResMessage, setAppLoading, updateUserProfile };
 //inviteSlice
-import {
-  setInvite,
-  setInviteLoading,
-  setInviteErrorMessage,
-} from '../toolkit/slice/inviteSlice';
+import { setInvite, setInviteLoading, setInviteErrorMessage } from '../toolkit/slice/inviteSlice';
 export { setInvite, setInviteErrorMessage, setInviteLoading };
 //memberSlice
-import {
-  setMember,
-  setMemberLoading,
-  setMemberErrorMessage,
-} from '../toolkit/slice/memberSlice';
+import { setMember, setMemberLoading, setMemberErrorMessage } from '../toolkit/slice/memberSlice';
 export { setMember, setMemberLoading, setMemberErrorMessage };
 //orgSlice
-import {
-  setOrg,
-  setOrgLoading,
-  setOrgErrorMessage,
-  setOrgResMessage,
-} from '../toolkit/slice/orgSlice';
+import { setOrg, setOrgLoading, setOrgErrorMessage, setOrgResMessage } from '../toolkit/slice/orgSlice';
 export { setOrg, setOrgLoading, setOrgErrorMessage, setOrgResMessage };
 //p-sectionSlice
 import {
@@ -175,12 +158,7 @@ import {
   setSectionLoading,
   setSectionResMessage,
 } from '@/toolkit/slice/p-sectionSlice';
-export {
-  setSection,
-  setSectionErrorMessage,
-  setSectionLoading,
-  setSectionResMessage,
-};
+export { setSection, setSectionErrorMessage, setSectionLoading, setSectionResMessage };
 //projectSlice
 import {
   setProject,
@@ -188,27 +166,12 @@ import {
   setProjectLoading,
   setProjectResMessage,
 } from '@/toolkit/slice/projectSlice';
-export {
-  setProject,
-  setProjectErrorMessage,
-  setProjectLoading,
-  setProjectResMessage,
-};
+export { setProject, setProjectErrorMessage, setProjectLoading, setProjectResMessage };
 //taskSlice
-import {
-  setTask,
-  setTaskErrorMessage,
-  setTaskLoading,
-  setTaskResMessage,
-} from '@/toolkit/slice//taskSlice';
+import { setTask, setTaskErrorMessage, setTaskLoading, setTaskResMessage } from '@/toolkit/slice//taskSlice';
 export { setTask, setTaskErrorMessage, setTaskLoading, setTaskResMessage };
 //teamSlice
-import {
-  setTeam,
-  setTeamErrorMessage,
-  setTeamLoading,
-  setTeamResMessage,
-} from '@/toolkit/slice/teamSlice';
+import { setTeam, setTeamErrorMessage, setTeamLoading, setTeamResMessage } from '@/toolkit/slice/teamSlice';
 export { setTeam, setTeamErrorMessage, setTeamLoading, setTeamResMessage };
 import store from '../toolkit/store';
 export { store };
@@ -219,13 +182,7 @@ import { useClickOutside } from '../utils/ClickOutSied';
 import { GetRoleColor } from '../utils/GetRoleColor';
 import { formatDate } from '../utils/formatDate';
 import { GetPriorityColor } from '@/utils/GetPriorityColor';
-export {
-  useHotkey,
-  useClickOutside,
-  GetRoleColor,
-  formatDate,
-  GetPriorityColor,
-};
+export { useHotkey, useClickOutside, GetRoleColor, formatDate, GetPriorityColor };
 
 // views
 //auth-page
@@ -248,6 +205,7 @@ import OrgPage from '@/views/pages/OrgPage';
 import Invite from '@/views/pages/Invite';
 import AcceptInvite from '@/views/pages/acceptInvite';
 import ProjectMemberPage from '@/views/pages/ProjectMemberPage';
+import TeamAssignedTask from '@/views/pages/TeamAssignedTask';
 export {
   ProfilePage,
   OrgMemberPage,
@@ -257,6 +215,7 @@ export {
   Invite,
   AcceptInvite,
   ProjectMemberPage,
+  TeamAssignedTask,
 };
 
 // temp

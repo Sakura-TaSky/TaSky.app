@@ -2,22 +2,10 @@ import React, { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { GoArrowLeft } from 'react-icons/go';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  BlueBtn,
-  Conform,
-  Input,
-  setProjectErrorMessage,
-  TextArea,
-  useClickOutside,
-  useProject,
-} from '@/global';
+import { BlueBtn, Conform, Input, setProjectErrorMessage, TextArea, useClickOutside, useProject } from '@/global';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 
-const ProjectUpdate = ({
-  setShowCreateProject,
-  forProjectCreate,
-  setShowProjectUpdatedPopup,
-}) => {
+const ProjectUpdate = ({ setShowCreateProject, forProjectCreate, setShowProjectUpdatedPopup }) => {
   const { register, handleSubmit } = useForm();
 
   const projectFromRef = useRef();
@@ -27,9 +15,9 @@ const ProjectUpdate = ({
   const { createProject, deleteProject, updateProject } = useProject();
   const [showDeleteProjectPopup, setShowDeleteProjectPopup] = useState(false);
 
-  const { project, projectLoading, projectErrorMessage } = useSelector(
-    state => state.project
-  );
+  const { org } = useSelector(state => state.org);
+
+  const { project, projectLoading, projectErrorMessage } = useSelector(state => state.project);
 
   useClickOutside(projectFromRef, () => {
     if (forProjectCreate) {
@@ -44,6 +32,10 @@ const ProjectUpdate = ({
   });
 
   const handleUpdateProject = async data => {
+    if (!org) {
+      dispatch(setProjectErrorMessage('Please select or create an organization first'));
+      return;
+    }
     if (forProjectCreate) {
       if (!data.projectName) {
         dispatch(setProjectErrorMessage('project name is required'));
@@ -109,9 +101,7 @@ const ProjectUpdate = ({
         <div className='p-6 w-[330px] bg-white dark:bg-zinc-950 border flex flex-col gap-3 border-zinc-500/30 rounded-lg shadow-md'>
           <div className='flex flex-col items-cente gap-2'>
             <span className='text-xl break-all'>
-              {forProjectCreate
-                ? 'Create Project'
-                : `Update Project - ${project?.projectName}`}
+              {forProjectCreate ? 'Create Project' : `Update Project - ${project?.projectName}`}
             </span>
             <span className='text-[15px] text-zinc-500'>
               {forProjectCreate
@@ -119,10 +109,7 @@ const ProjectUpdate = ({
                 : 'Enter your new Project Name and description .'}
             </span>
           </div>
-          <form
-            onSubmit={handleSubmit(handleUpdateProject)}
-            className='flex flex-col w-full items-start gap-4 text-sm'
-          >
+          <form onSubmit={handleSubmit(handleUpdateProject)} className='flex flex-col w-full items-start gap-4 text-sm'>
             <>
               <Input
                 className={'flex flex-col w-full gap-0.5'}
@@ -147,16 +134,9 @@ const ProjectUpdate = ({
                 inputClassName='bg-zinc-500/5 focus:border-blue-500/30 focus:bg-blue-500/10 outline-0 placeholder:text-zinc-500 placeholder:font-light font-medium p-2 rounded border border-zinc-300 dark:border-zinc-800'
               />
             </>
-            {projectErrorMessage && (
-              <span className='ml-0.5 text-sm text-red-500'>
-                {projectErrorMessage}
-              </span>
-            )}
+            {projectErrorMessage && <span className='ml-0.5 text-sm text-red-500'>{projectErrorMessage}</span>}
             <div className='flex mt-4 w-full justify-center'>
-              <BlueBtn
-                isLoading={projectLoading}
-                text={forProjectCreate ? 'create' : 'Update'}
-              />
+              <BlueBtn isLoading={projectLoading} text={forProjectCreate ? 'create' : 'Update'} />
             </div>
           </form>
         </div>

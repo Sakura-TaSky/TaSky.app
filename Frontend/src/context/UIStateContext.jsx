@@ -30,9 +30,7 @@ export const UIStateProvider = ({ children }) => {
     setShowConformation,
   };
 
-  return (
-    <UIStateContext.Provider value={value}>{children}</UIStateContext.Provider>
-  );
+  return <UIStateContext.Provider value={value}>{children}</UIStateContext.Provider>;
 };
 
 export const useUIState = () => {

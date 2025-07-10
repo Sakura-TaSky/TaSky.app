@@ -6,20 +6,16 @@ import { GoArrowLeft } from 'react-icons/go';
 import { useDispatch, useSelector } from 'react-redux';
 import { RiDeleteBin6Line } from 'react-icons/ri';
 
-const TeamUpdate = ({
-  setShowUpdateTeamPopup,
-  setShowTeamCreateForm,
-  forTeamCreation,
-}) => {
+const TeamUpdate = ({ setShowUpdateTeamPopup, setShowTeamCreateForm, forTeamCreation }) => {
   const { register, handleSubmit } = useForm();
 
   const updateTeamPopupRef = useRef();
   const [showDeleteTeamPopup, setShowDeleteTeamPopup] = useState(false);
   const [deleteTeamName, setDeleteTeamName] = useState('');
 
-  const { team, teamErrorMessage, teamLoading } = useSelector(
-    state => state.team
-  );
+  const { org } = useSelector(state => state.org);
+
+  const { team, teamErrorMessage, teamLoading } = useSelector(state => state.team);
 
   const dispatch = useDispatch();
 
@@ -38,6 +34,10 @@ const TeamUpdate = ({
   });
 
   const handleUpdateTeam = async data => {
+    if (!org) {
+      dispatch(setTeamErrorMessage('Please select or create an organization first'));
+      return;
+    }
     if (forTeamCreation) {
       if (!data.teamName) {
         dispatch(setTeamErrorMessage('team name is required !'));
@@ -96,10 +96,7 @@ const TeamUpdate = ({
           {!forTeamCreation && (
             <i
               title='Delete Team'
-              onClick={() => (
-                setShowDeleteTeamPopup(true),
-                dispatch(setTeamErrorMessage(''))
-              )}
+              onClick={() => (setShowDeleteTeamPopup(true), dispatch(setTeamErrorMessage('')))}
               className='cursor-pointer p-1 bg-red-500/10 rounded  text-red-500 hover:border-red-500/40 border border-zinc-50/0'
             >
               <RiDeleteBin6Line />
@@ -113,9 +110,7 @@ const TeamUpdate = ({
         >
           <div className='flex flex-col items-cente gap-2'>
             <span className='text-xl break-all'>
-              {forTeamCreation
-                ? 'Create Team'
-                : `Update Team - ${team?.teamName}`}
+              {forTeamCreation ? 'Create Team' : `Update Team - ${team?.teamName}`}
             </span>
             <span className='text-[15px] text-zinc-500'>
               {forTeamCreation
@@ -123,10 +118,7 @@ const TeamUpdate = ({
                 : 'Enter your new Team Name and description .'}
             </span>
           </div>
-          <form
-            onSubmit={handleSubmit(handleUpdateTeam)}
-            className='flex flex-col w-full items-start gap-4 text-sm'
-          >
+          <form onSubmit={handleSubmit(handleUpdateTeam)} className='flex flex-col w-full items-start gap-4 text-sm'>
             <>
               <Input
                 className={'flex flex-col w-full gap-0.5'}
@@ -151,16 +143,9 @@ const TeamUpdate = ({
                 inputClassName='bg-zinc-500/5 focus:border-blue-500/30 focus:bg-blue-500/10 outline-0 placeholder:text-zinc-500 placeholder:font-light font-medium p-2 rounded border border-zinc-300 dark:border-zinc-800'
               />
             </>
-            {teamErrorMessage && (
-              <span className='ml-0.5 text-sm text-red-500'>
-                {teamErrorMessage}
-              </span>
-            )}
+            {teamErrorMessage && <span className='ml-0.5 text-sm text-red-500'>{teamErrorMessage}</span>}
             <div className='flex mt-4 w-full justify-center'>
-              <BlueBtn
-                isLoading={teamLoading}
-                text={forTeamCreation ? 'create' : 'Update'}
-              />
+              <BlueBtn isLoading={teamLoading} text={forTeamCreation ? 'create' : 'Update'} />
             </div>
           </form>
         </div>
@@ -169,15 +154,10 @@ const TeamUpdate = ({
         <Conform
           title={`Delete Team - ${team?.teamName}`}
           p1={`Deleting this Team is a permanent action and cannot be undone.`}
-          p2={
-            'You must enter the correct Team name to confirm deletion. Only the Team owner can perform this action.'
-          }
+          p2={'You must enter the correct Team name to confirm deletion. Only the Team owner can perform this action.'}
           cancelText={'Cancle'}
           conformText={'Delete'}
-          onCancel={() => (
-            setShowDeleteTeamPopup(false),
-            dispatch(setTeamErrorMessage(''))
-          )}
+          onCancel={() => (setShowDeleteTeamPopup(false), dispatch(setTeamErrorMessage('')))}
           onConform={handleDeleteTeam}
           danger={true}
           loding={teamLoading}

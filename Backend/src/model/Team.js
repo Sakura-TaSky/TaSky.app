@@ -1,15 +1,15 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const teamSchema = new mongoose.Schema(
   {
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       required: true,
     },
     inOrg: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Organization",
+      ref: 'Organization',
     },
     teamName: {
       type: String,
@@ -24,13 +24,13 @@ const teamSchema = new mongoose.Schema(
       {
         member: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+          ref: 'User',
           required: true,
         },
         role: {
           type: String,
-          enum: ["admin", "moderator", "leader", "member", "viewer"],
-          default: "member",
+          enum: ['admin', 'moderator', 'leader', 'member', 'viewer'],
+          default: 'member',
         },
         joinedAt: {
           type: Date,
@@ -41,7 +41,7 @@ const teamSchema = new mongoose.Schema(
     projects: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Project",
+        ref: 'Project',
       },
     ],
     timeline: [
@@ -59,9 +59,9 @@ const teamSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
-const Team = mongoose.model("Team", teamSchema);
+const Team = mongoose.model('Team', teamSchema);
 
 export default Team;

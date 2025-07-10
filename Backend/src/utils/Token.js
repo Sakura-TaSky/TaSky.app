@@ -1,7 +1,7 @@
-import User from "../model/User.js";
-import { ApiError } from "./ApiError.js";
+import User from '../model/User.js';
+import { ApiError } from './ApiError.js';
 
-const generateTokens = async (userId) => {
+const generateTokens = async userId => {
   try {
     const user = await User.findById(userId);
     const accessToken = user.generateAccessToken();
@@ -14,7 +14,7 @@ const generateTokens = async (userId) => {
   } catch (error) {
     throw new ApiError(
       500,
-      "Something went wrong while generating refresh and access tokens",
+      'Something went wrong while generating refresh and access tokens'
     );
   }
 };

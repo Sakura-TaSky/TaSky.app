@@ -1,40 +1,40 @@
-import mongoose from "mongoose";
-import Project from "../model/project/Project.js";
-import Team from "../model/Team.js";
-import User from "../model/User.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiRes } from "../utils/ApiRes.js";
-import { asyncFunc } from "../utils/asyncFunc.js";
-import { sendEmail } from "../service/SendEmail.js";
+import mongoose from 'mongoose';
+import Project from '../model/project/Project.js';
+import Team from '../model/Team.js';
+import User from '../model/User.js';
+import { ApiError } from '../utils/ApiError.js';
+import { ApiRes } from '../utils/ApiRes.js';
+import { asyncFunc } from '../utils/asyncFunc.js';
+import { sendEmail } from '../service/SendEmail.js';
 
 const createProject = asyncFunc(async (req, res) => {
   const { projectName, description } = req.body;
   const org = req.org;
   const user = req.user;
   if (!projectName) {
-    throw new ApiError(400, "project Name is required");
+    throw new ApiError(400, 'project Name is required');
   }
   const project = await Project.create({
     createdBy: user._id,
     inOrg: org._id,
     projectName,
-    description: description || "",
+    description: description || '',
     members: [
       {
         member: user._id,
-        role: "admin",
+        role: 'admin',
       },
     ],
   });
   if (!project) {
     throw new ApiError(
       500,
-      "Failed to create project due to server error, please try again later",
+      'Failed to create project due to server error, please try again later'
     );
   }
   user.inProject.push({
     project: project._id,
-    role: "admin",
+    role: 'admin',
   });
   await user.save();
   org.timeline.push({
@@ -44,39 +44,39 @@ const createProject = asyncFunc(async (req, res) => {
   await org.save();
   const populatedProject = await Project.findById(project._id).populate([
     {
-      path: "createdBy",
-      select: "userName email profilePhoto",
+      path: 'createdBy',
+      select: 'userName email profilePhoto',
     },
     {
-      path: "members.member",
-      select: "userName email profilePhoto",
+      path: 'members.member',
+      select: 'userName email profilePhoto',
     },
   ]);
   return res
     .status(200)
-    .json(new ApiRes(200, populatedProject, "project created successfully"));
+    .json(new ApiRes(200, populatedProject, 'project created successfully'));
 });
 
 const updateProject = asyncFunc(async (req, res) => {
   const { projectName, description } = req.body;
   const project = req.project;
   if (projectName) project.projectName = projectName;
-  if (description) project.description = description || "";
+  if (description) project.description = description || '';
   await project.save();
   const populatedProject = await Project.findById(project._id).populate([
     {
-      path: "createdBy",
-      select: "userName email profilePhoto",
+      path: 'createdBy',
+      select: 'userName email profilePhoto',
     },
     {
-      path: "members.member",
-      select: "userName email profilePhoto",
+      path: 'members.member',
+      select: 'userName email profilePhoto',
     },
   ]);
   return res
     .status(200)
     .json(
-      new ApiRes(200, populatedProject, "project details updated successfully"),
+      new ApiRes(200, populatedProject, 'project details updated successfully')
     );
 });
 
@@ -85,19 +85,19 @@ const deleteProject = asyncFunc(async (req, res) => {
   const org = req.org;
   const user = req.user;
   if (user._id.toString() !== project.createdBy.toString()) {
-    throw new ApiError(403, "Only project owner can delete the project.");
+    throw new ApiError(403, 'Only project owner can delete the project.');
   }
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     org.projects = org.projects.filter(
-      (p) => p.toString() !== project._id.toString(),
+      p => p.toString() !== project._id.toString()
     );
     org.timeline.push({
       text: `<b>${user.userName}</b> delete the project - <i>${project.projectName}</i>`,
     });
     await org.save({ session });
-    const memberIds = project.members.map((m) => m.member);
+    const memberIds = project.members.map(m => m.member);
     await User.updateMany(
       {
         _id: {
@@ -111,7 +111,7 @@ const deleteProject = asyncFunc(async (req, res) => {
           },
         },
       },
-      { session },
+      { session }
     );
     await Team.updateMany(
       { inOrg: org._id },
@@ -120,25 +120,25 @@ const deleteProject = asyncFunc(async (req, res) => {
           projects: project._id,
         },
       },
-      { session },
+      { session }
     );
     await Project.deleteOne(
       {
         _id: project._id,
       },
-      { session },
+      { session }
     );
     await session.commitTransaction();
     session.endSession();
     return res
       .status(200)
-      .json(new ApiRes(200, null, "Project deleted successfully"));
+      .json(new ApiRes(200, null, 'Project deleted successfully'));
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     throw new ApiError(
       500,
-      "Failed to delete Project due to server error, please try again later",
+      'Failed to delete Project due to server error, please try again later'
     );
   }
 });
@@ -150,40 +150,40 @@ const addMemberInProject = asyncFunc(async (req, res) => {
   const user = req.user;
   const org = req.org;
   if (!mongoose.Types.ObjectId.isValid(memberId)) {
-    throw new ApiError(400, "Invalid member ID");
+    throw new ApiError(400, 'Invalid member ID');
   }
   const isMemberInOrg = org.members.some(
-    (m) => m.member.toString() == memberId.toString(),
+    m => m.member.toString() == memberId.toString()
   );
   if (!isMemberInOrg) {
-    throw new ApiError(404, "The Member is not part of this organization");
+    throw new ApiError(404, 'The Member is not part of this organization');
   }
   const isMemberInProject = project.members.some(
-    (m) => m.member.toString() == memberId.toString(),
+    m => m.member.toString() == memberId.toString()
   );
   if (isMemberInProject) {
-    throw new ApiError(403, "Member is already part of this project");
+    throw new ApiError(403, 'Member is already part of this project');
   }
   const member = await User.findByIdAndUpdate(memberId, {
     $push: {
       inProject: {
         project: project._id,
-        role: asRoleOf || "member",
+        role: asRoleOf || 'member',
       },
     },
   });
   project.members.push({
     member: memberId,
-    role: asRoleOf || "member",
+    role: asRoleOf || 'member',
   });
   await project.save();
   const addedMember = await project.populate({
-    path: "members.member",
-    select: "userName email profilePhoto",
+    path: 'members.member',
+    select: 'userName email profilePhoto',
   });
 
   const addedMemberInfo = addedMember.members.find(
-    (m) => m.member._id.toString() === memberId.toString(),
+    m => m.member._id.toString() === memberId.toString()
   );
   sendEmail({
     to: member.email,
@@ -209,8 +209,8 @@ const addMemberInProject = asyncFunc(async (req, res) => {
       new ApiRes(
         200,
         addedMemberInfo,
-        "Member successfully added in to project",
-      ),
+        'Member successfully added in to project'
+      )
     );
 });
 
@@ -221,29 +221,27 @@ const addTeamInProject = asyncFunc(async (req, res) => {
   const org = req.org;
   const user = req.user;
   if (!mongoose.Types.ObjectId.isValid(teamId)) {
-    throw new ApiError(400, "Invalid team ID");
+    throw new ApiError(400, 'Invalid team ID');
   }
   const team = await Team.findOne({ _id: teamId, inOrg: org._id }).populate({
-    path: "members.member",
-    select: "userName email",
+    path: 'members.member',
+    select: 'userName email',
   });
   if (!team) {
-    throw new ApiError(404, "Team not found in this organization");
+    throw new ApiError(404, 'Team not found in this organization');
   }
   const isTeamInProject = project.teams.some(
-    (t) => t.toString() === teamId.toString(),
+    t => t.toString() === teamId.toString()
   );
   if (isTeamInProject) {
-    throw new ApiError(403, "Team is already in this project");
+    throw new ApiError(403, 'Team is already in this project');
   }
   project.teams.push(team._id);
-  const addedMemberIds = new Set(
-    project.members.map((m) => m.member.toString()),
-  );
+  const addedMemberIds = new Set(project.members.map(m => m.member.toString()));
   const newlyAddedUsers = [];
   for (const tm of team.members) {
     const memberId = tm.member._id.toString();
-    const role = asRoleOf || "member";
+    const role = asRoleOf || 'member';
     if (!addedMemberIds.has(memberId)) {
       project.members.push({ member: tm.member._id, role });
       await User.updateOne(
@@ -255,14 +253,14 @@ const addTeamInProject = asyncFunc(async (req, res) => {
               role,
             },
           },
-        },
+        }
       );
       newlyAddedUsers.push(tm.member);
       addedMemberIds.add(memberId);
     }
   }
   await project.save();
-  const populatedProject = await project.populate([{ path: "teams" }]);
+  const populatedProject = await project.populate([{ path: 'teams' }]);
   for (const member of newlyAddedUsers) {
     sendEmail({
       to: member.email,
@@ -285,16 +283,16 @@ const addTeamInProject = asyncFunc(async (req, res) => {
   }
 
   const addedTeam = populatedProject.teams.find(
-    (t) => t._id.toString() === team._id.toString(),
+    t => t._id.toString() === team._id.toString()
   );
 
   if (!addedTeam) {
-    throw new ApiError(500, "Added team not found after population");
+    throw new ApiError(500, 'Added team not found after population');
   }
 
   const populatedAddedTeam = await addedTeam.populate([
-    { path: "members.member", select: "userName email profilePhoto" },
-    { path: "createdBy", select: "userName email profilePhoto" },
+    { path: 'members.member', select: 'userName email profilePhoto' },
+    { path: 'createdBy', select: 'userName email profilePhoto' },
   ]);
 
   return res
@@ -303,8 +301,8 @@ const addTeamInProject = asyncFunc(async (req, res) => {
       new ApiRes(
         200,
         populatedAddedTeam,
-        `Team '${team.teamName}' and its members added to the project`,
-      ),
+        `Team '${team.teamName}' and its members added to the project`
+      )
     );
 });
 
@@ -314,19 +312,19 @@ const removeMemberFromProject = asyncFunc(async (req, res) => {
   const user = req.user;
   const org = req.org;
   if (!mongoose.Types.ObjectId.isValid(memberId)) {
-    throw new ApiError(400, "Invalid member ID");
+    throw new ApiError(400, 'Invalid member ID');
   }
   const isMemberInProject = project.members.some(
-    (m) => m.member.toString() == memberId.toString(),
+    m => m.member.toString() == memberId.toString()
   );
   if (!isMemberInProject) {
-    throw new ApiError(404, "Member not found in project");
+    throw new ApiError(404, 'Member not found in project');
   }
   const isOwnerOfProject = project.createdBy.toString() == memberId.toString();
   if (isOwnerOfProject) {
     throw new ApiError(
       403,
-      "You can't Remove the owner of project from the project",
+      "You can't Remove the owner of project from the project"
     );
   }
   const session = await mongoose.startSession();
@@ -341,7 +339,7 @@ const removeMemberFromProject = asyncFunc(async (req, res) => {
           },
         },
       },
-      { session },
+      { session }
     );
     project.members.pull({
       member: memberId,
@@ -377,12 +375,12 @@ const removeMemberFromProject = asyncFunc(async (req, res) => {
     session.endSession();
     const populatedProject = await project.populate([
       {
-        path: "createdBy",
-        select: "userName email profilePhoto",
+        path: 'createdBy',
+        select: 'userName email profilePhoto',
       },
       {
-        path: "members.member",
-        select: "userName email profilePhoto",
+        path: 'members.member',
+        select: 'userName email profilePhoto',
       },
     ]);
     return res
@@ -391,15 +389,15 @@ const removeMemberFromProject = asyncFunc(async (req, res) => {
         new ApiRes(
           200,
           populatedProject,
-          "member successfully removed from the project",
-        ),
+          'member successfully removed from the project'
+        )
       );
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     throw new ApiError(
       500,
-      "Failed to remove Member from the project due to server, please try again later",
+      'Failed to remove Member from the project due to server, please try again later'
     );
   }
 });
@@ -411,23 +409,23 @@ const removeTeamFromProject = asyncFunc(async (req, res) => {
   const user = req.user;
 
   if (!mongoose.Types.ObjectId.isValid(teamId)) {
-    throw new ApiError(400, "Invalid team ID");
+    throw new ApiError(400, 'Invalid team ID');
   }
 
   const isTeamInProject = project.teams.some(
-    (t) => t.toString() === teamId.toString(),
+    t => t.toString() === teamId.toString()
   );
   if (!isTeamInProject) {
-    throw new ApiError(404, "Team is not part of this project");
+    throw new ApiError(404, 'Team is not part of this project');
   }
 
   const team = await Team.findOne({ _id: teamId, inOrg: org._id }).populate({
-    path: "members.member",
-    select: "userName email inProject",
+    path: 'members.member',
+    select: 'userName email inProject',
   });
 
   if (!team) {
-    throw new ApiError(404, "Team not found in this organization");
+    throw new ApiError(404, 'Team not found in this organization');
   }
 
   const session = await mongoose.startSession();
@@ -444,27 +442,27 @@ const removeTeamFromProject = asyncFunc(async (req, res) => {
       const memberId = tm.member._id.toString();
 
       const isInProject = project.members.some(
-        (m) => m.member.toString() === memberId,
+        m => m.member.toString() === memberId
       );
       if (!isInProject) continue;
 
       const isInOtherTeam = await Team.exists({
         _id: { $ne: teamId },
         _id: { $in: project.teams },
-        "members.member": memberId,
+        'members.member': memberId,
       });
 
       const isOwner = memberId === project.createdBy.toString();
 
       if (!isInOtherTeam && !isOwner) {
         project.members = project.members.filter(
-          (m) => m.member.toString() !== memberId,
+          m => m.member.toString() !== memberId
         );
 
         await User.updateOne(
           { _id: memberId },
           { $pull: { inProject: { project: project._id } } },
-          { session },
+          { session }
         );
 
         removedMembers.push(tm.member);
@@ -513,8 +511,8 @@ const removeTeamFromProject = asyncFunc(async (req, res) => {
         new ApiRes(
           200,
           null,
-          `Team '${team.teamName}' and its members removed from the project`,
-        ),
+          `Team '${team.teamName}' and its members removed from the project`
+        )
       );
   } catch (error) {
     if (!committed) {
@@ -523,7 +521,7 @@ const removeTeamFromProject = asyncFunc(async (req, res) => {
     }
     throw new ApiError(
       500,
-      "Failed to remove team from the project. Please try again later.",
+      'Failed to remove team from the project. Please try again later.'
     );
   }
 });
@@ -534,45 +532,45 @@ const changeProjectMemberRole = asyncFunc(async (req, res) => {
   const user = req.user;
   const project = req.project;
   if (!mongoose.Types.ObjectId.isValid(memberId)) {
-    throw new ApiError(400, "Invalid member ID");
+    throw new ApiError(400, 'Invalid member ID');
   }
   const isMemberInProject = project.members.some(
-    (m) => m.member.toString() == memberId.toString(),
+    m => m.member.toString() == memberId.toString()
   );
   if (!isMemberInProject) {
-    throw new ApiError(404, "The member is not part of this project");
+    throw new ApiError(404, 'The member is not part of this project');
   }
   const isOwner = memberId.toString() == project.createdBy.toString();
   if (isOwner) {
     throw new ApiError(403, "You can't change role of a project owner");
   }
-  const validRoles = ["admin", "moderator", "leader", "member", "viewer"];
+  const validRoles = ['admin', 'moderator', 'leader', 'member', 'viewer'];
   if (!validRoles.includes(asRoleOf)) {
-    throw new ApiError(400, "Invalid role");
+    throw new ApiError(400, 'Invalid role');
   }
   const member = project.members.find(
-    (m) => m.member.toString() === memberId.toString(),
+    m => m.member.toString() === memberId.toString()
   );
   if (member) {
     member.role = asRoleOf;
   }
   await project.save();
   await User.updateOne(
-    { _id: memberId, "inProject.project": project._id },
-    { $set: { "inProject.$.role": asRoleOf } },
+    { _id: memberId, 'inProject.project': project._id },
+    { $set: { 'inProject.$.role': asRoleOf } }
   );
   const populatedProject = await project.populate([
     {
-      path: "members.member",
-      select: "userName email profilePhoto",
+      path: 'members.member',
+      select: 'userName email profilePhoto',
     },
   ]);
   const updatedMember = populatedProject.members.find(
-    (m) => m.member._id.toString() === memberId.toString(),
+    m => m.member._id.toString() === memberId.toString()
   );
   return res
     .status(200)
-    .json(new ApiRes(200, updatedMember, "member role updated successfully"));
+    .json(new ApiRes(200, updatedMember, 'member role updated successfully'));
 });
 
 const leaveProject = asyncFunc(async (req, res) => {
@@ -583,17 +581,15 @@ const leaveProject = asyncFunc(async (req, res) => {
   if (userId === project.createdBy.toString()) {
     throw new ApiError(403, "Project owner can't leave the project.");
   }
-  const isInProject = project.members.some(
-    (m) => m.member.toString() === userId,
-  );
+  const isInProject = project.members.some(m => m.member.toString() === userId);
   if (!isInProject) {
-    throw new ApiError(400, "You are not a member of this project.");
+    throw new ApiError(400, 'You are not a member of this project.');
   }
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     project.members = project.members.filter(
-      (m) => m.member.toString() !== userId,
+      m => m.member.toString() !== userId
     );
     await User.updateOne(
       { _id: userId },
@@ -602,7 +598,7 @@ const leaveProject = asyncFunc(async (req, res) => {
           inProject: { project: projectId },
         },
       },
-      { session },
+      { session }
     );
     await project.save({ session });
     await session.commitTransaction();
@@ -613,15 +609,15 @@ const leaveProject = asyncFunc(async (req, res) => {
         new ApiRes(
           200,
           null,
-          `You have successfully left the project '${project.projectName}'.`,
-        ),
+          `You have successfully left the project '${project.projectName}'.`
+        )
       );
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     throw new ApiError(
       500,
-      "Failed to leave the project. Please try again later.",
+      'Failed to leave the project. Please try again later.'
     );
   }
 });
@@ -631,45 +627,45 @@ const transferOwnershipOfProject = asyncFunc(async (req, res) => {
   const user = req.user;
   const project = req.project;
   if (!mongoose.Types.ObjectId.isValid(memberId)) {
-    throw new ApiError(400, "Invalid member ID");
+    throw new ApiError(400, 'Invalid member ID');
   }
   const isMemberInProject = project.members.some(
-    (m) => m.member.toString() == memberId.toString(),
+    m => m.member.toString() == memberId.toString()
   );
   if (!isMemberInProject) {
-    throw new ApiError(404, "The member is not part of this project");
+    throw new ApiError(404, 'The member is not part of this project');
   }
   const isOwner = user._id.toString() == project.createdBy.toString();
   if (!isOwner) {
     throw new ApiError(
       403,
-      "only project owner can transfer ownership or the project",
+      'only project owner can transfer ownership or the project'
     );
   }
   project.createdBy = memberId;
   const member = project.members.find(
-    (m) => m.member.toString() === memberId.toString(),
+    m => m.member.toString() === memberId.toString()
   );
   if (member) {
-    member.role = "admin";
+    member.role = 'admin';
   }
   await project.save();
   await User.updateOne(
-    { _id: memberId, "inProject.project": project._id },
+    { _id: memberId, 'inProject.project': project._id },
     {
       $set: {
-        "inProject.$.role": "admin",
+        'inProject.$.role': 'admin',
       },
-    },
+    }
   );
   const populatedProject = await project.populate([
     {
-      path: "createdBy",
-      select: "userName email profilePhoto",
+      path: 'createdBy',
+      select: 'userName email profilePhoto',
     },
     {
-      path: "members.member",
-      select: "userName email profilePhoto",
+      path: 'members.member',
+      select: 'userName email profilePhoto',
     },
   ]);
   return res
@@ -678,8 +674,8 @@ const transferOwnershipOfProject = asyncFunc(async (req, res) => {
       new ApiRes(
         200,
         populatedProject.members,
-        "project owner change successfully",
-      ),
+        'project owner change successfully'
+      )
     );
 });
 

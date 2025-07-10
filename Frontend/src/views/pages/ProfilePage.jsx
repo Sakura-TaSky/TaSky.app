@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { SlOrganization } from 'react-icons/sl';
 import { TbBuildingSkyscraper } from 'react-icons/tb';
-import {
-  SquareCheckBig,
-  Palette,
-  Sun,
-  Moon,
-  LogOut,
-  FolderKanban,
-  CornerDownRight,
-} from 'lucide-react';
+import { SquareCheckBig, Palette, Sun, Moon, LogOut, FolderKanban, CornerDownRight } from 'lucide-react';
 import { HiUsers } from 'react-icons/hi2';
 import { PiMicrosoftTeamsLogoFill } from 'react-icons/pi';
 import { useTheme } from '../../styles/Themes/Theme';
-import { IconBtn, UpdateUser, useLogout } from '@/global';
+import {
+  IconBtn,
+  UpdateUser,
+  useLogout,
+  getAssignedTasks,
+  setProject,
+  setSection,
+  useUIState,
+  setTask,
+} from '@/global';
 import { BsFillUnlockFill } from 'react-icons/bs';
 import { BsArrowCounterclockwise } from 'react-icons/bs';
 import { CgDanger } from 'react-icons/cg';
@@ -22,15 +23,23 @@ import { CiUser } from 'react-icons/ci';
 import { RiEdit2Fill } from 'react-icons/ri';
 import { GoProjectSymlink } from 'react-icons/go';
 import { useNavigate } from 'react-router-dom';
+import { RiTodoLine } from 'react-icons/ri';
 
 const ProfilePage = () => {
   const { user } = useSelector(state => state.auth);
+  const { org } = useSelector(state => state.org);
+
+  const { setShowTaskPage } = useUIState();
+
+  const assignedTasks = getAssignedTasks(user, org || []);
 
   const [showUpdateUserPopup, setShowUpdateUserPopup] = useState(null);
 
   const { lightTheme, darkTheme } = useTheme();
 
   const navigator = useNavigate();
+
+  const dispatch = useDispatch();
 
   const logout = useLogout();
 
@@ -42,11 +51,7 @@ const ProfilePage = () => {
           <div className='flex gap-10'>
             <div className='flex items-center justify-center overflow-hidden w-20 h-20 bg-slate-200 dark:bg-zinc-950 rounded-full -ml-1'>
               {user.profilePhoto ? (
-                <img
-                  className='h-full w-full object-cover'
-                  src={user.profilePhoto}
-                  alt={user.userName}
-                />
+                <img className='h-full w-full object-cover' src={user.profilePhoto} alt={user.userName} />
               ) : (
                 <CiUser size={30} />
               )}
@@ -70,10 +75,39 @@ const ProfilePage = () => {
         {/* task Info */}
         <div className='flex flex-col gap-2'>
           <div className='flex gap-2 items-center mb-2'>
-            <SquareCheckBig size={16} className='text-green-500' />
+            <RiTodoLine size={16} className='text-green-500' />
             <span>Tasks</span>
           </div>
-          <span className='text-sm ml-4 text-zinc-500'>No Task !</span>
+          {assignedTasks.length > 0 ? (
+            assignedTasks.map(task => {
+              const orgName = task.org?.orgName || 'org';
+              const project = task.project || 'project';
+              const projectId = task.project?._id || 'id';
+              const section = task.section || 'section';
+              const taskShow = task.task || 'task';
+              const projectUrl = `/${orgName}/${project?.projectName}/${projectId}/project`;
+              return (
+                <div
+                  onClick={() => (
+                    dispatch(setProject(project)),
+                    dispatch(setSection(section)),
+                    dispatch(setTask(taskShow)),
+                    setShowTaskPage(true),
+                    navigator(projectUrl)
+                  )}
+                  key={task.task._id}
+                  className='flex gap-2 text-sm items-center ml-4 text-zinc-600 dark:text-zinc-400 cursor-pointer hover:text-blue-500 hover:underline max-w-[300px] break-all'
+                >
+                  <SquareCheckBig size={14.5} className='text-green-500' />
+                  <div className='flex flex-col'>
+                    <span className='text-sm'>{task.task.title}</span>
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <span className='text-sm ml-4 text-zinc-500'>No Task !</span>
+          )}
         </div>
         {/* orgInfo */}
         <div className='flex flex-col gap-2'>
@@ -83,18 +117,13 @@ const ProfilePage = () => {
           </div>
           {user?.inOrg?.length > 0 ? (
             user?.inOrg?.map(o => (
-              <div
-                key={o.org._id}
-                className='flex gap-2 text-sm items-center ml-4 text-zinc-600 dark:text-zinc-400'
-              >
+              <div key={o.org._id} className='flex gap-2 text-sm items-center ml-4 text-zinc-600 dark:text-zinc-400'>
                 <TbBuildingSkyscraper className='text-slate-500' />
                 <span>{o.org.orgName}</span>
               </div>
             ))
           ) : (
-            <span className='text-sm ml-4 text-zinc-500'>
-              No Organization !
-            </span>
+            <span className='text-sm ml-4 text-zinc-500'>No Organization !</span>
           )}
         </div>
         {/* project info */}
@@ -125,10 +154,7 @@ const ProfilePage = () => {
           </div>
           {user?.inTeams?.length > 0 ? (
             user?.inTeams?.map(t => (
-              <div
-                key={t?.team?._id}
-                className='flex gap-2 text-sm items-center ml-4 text-zinc-600 dark:text-zinc-400'
-              >
+              <div key={t?.team?._id} className='flex gap-2 text-sm items-center ml-4 text-zinc-600 dark:text-zinc-400'>
                 <HiUsers className='text-slate-500' />
                 <span>{t?.team?.teamName}</span>
               </div>
@@ -167,9 +193,8 @@ const ProfilePage = () => {
           <div className='flex flex-col gap-2 ml-4 text-sm max-w-[350px]'>
             <span>
               {' '}
-              If you forgot your password, don't worry. You can reset it
-              securely using an OTP sent to your registered email. Click the
-              button below to start the reset process .
+              If you forgot your password, don't worry. You can reset it securely using an OTP sent to your registered
+              email. Click the button below to start the reset process .
             </span>
             <div className='flex'>
               <CornerDownRight className='text-zinc-500' strokeWidth={1} />
@@ -191,8 +216,8 @@ const ProfilePage = () => {
           <div className='flex flex-col gap-2 ml-4 text-sm max-w-[350px]'>
             <span>
               {' '}
-              You are about to log out of your account. If you continue, you'll
-              need to sign-In again to access your DoFlow account.
+              You are about to log out of your account. If you continue, you'll need to sign-In again to access your
+              DoFlow account.
             </span>
             <div className='flex '>
               <CornerDownRight className='text-zinc-500' strokeWidth={1} />
@@ -206,9 +231,7 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
-      {showUpdateUserPopup && (
-        <UpdateUser setShowUpdateUserPopup={setShowUpdateUserPopup} />
-      )}
+      {showUpdateUserPopup && <UpdateUser setShowUpdateUserPopup={setShowUpdateUserPopup} />}
     </div>
   );
 };

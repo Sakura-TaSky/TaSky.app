@@ -1,31 +1,31 @@
-import mongoose from "mongoose";
-import Invite from "../model/Invite.js";
-import Organization from "../model/org.js";
-import Project from "../model/project/Project.js";
-import Team from "../model/Team.js";
-import User from "../model/User.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiRes } from "../utils/ApiRes.js";
-import { asyncFunc } from "../utils/asyncFunc.js";
-import { sendEmail } from "../service/SendEmail.js";
+import mongoose from 'mongoose';
+import Invite from '../model/Invite.js';
+import Organization from '../model/org.js';
+import Project from '../model/project/Project.js';
+import Team from '../model/Team.js';
+import User from '../model/User.js';
+import { ApiError } from '../utils/ApiError.js';
+import { ApiRes } from '../utils/ApiRes.js';
+import { asyncFunc } from '../utils/asyncFunc.js';
+import { sendEmail } from '../service/SendEmail.js';
 
 const createTeam = asyncFunc(async (req, res) => {
   const { teamName, description } = req.body;
   const org = req.org;
   const user = req.user;
   if (!teamName) {
-    throw new ApiError(400, "Team name is required");
+    throw new ApiError(400, 'Team name is required');
   }
   const teamTimelineHtml = `team <i>${teamName}</i> has been created by <b>${user.userName}</b>`;
   const team = await Team.create({
     createdBy: user._id,
     inOrg: org._id,
     teamName,
-    description: description || "",
+    description: description || '',
     members: [
       {
         member: user._id,
-        role: "admin",
+        role: 'admin',
       },
     ],
     timeline: [
@@ -37,12 +37,12 @@ const createTeam = asyncFunc(async (req, res) => {
   if (!team) {
     throw new ApiError(
       500,
-      "Team creation failed due to a server error. Please try again later",
+      'Team creation failed due to a server error. Please try again later'
     );
   }
   user.inTeams.push({
     team: team._id,
-    role: "admin",
+    role: 'admin',
   });
   await user.save();
   const timelineHtml = `<b>${user.userName}</b> created a new Team <i>${team.teamName}</i>`;
@@ -52,18 +52,18 @@ const createTeam = asyncFunc(async (req, res) => {
   });
   const populatedTeam = await team.populate([
     {
-      path: "createdBy",
-      select: "userName email profilePhoto",
+      path: 'createdBy',
+      select: 'userName email profilePhoto',
     },
     {
-      path: "members.member",
-      select: "userName email profilePhoto",
+      path: 'members.member',
+      select: 'userName email profilePhoto',
     },
   ]);
   await org.save();
   return res
     .status(201)
-    .json(new ApiRes(201, populatedTeam, "Team created successfully"));
+    .json(new ApiRes(201, populatedTeam, 'Team created successfully'));
 });
 
 const updateTeam = asyncFunc(async (req, res) => {
@@ -79,17 +79,17 @@ const updateTeam = asyncFunc(async (req, res) => {
   await team.save();
   const populatedTeam = await team.populate([
     {
-      path: "createdBy",
-      select: "userName email profilePhoto",
+      path: 'createdBy',
+      select: 'userName email profilePhoto',
     },
     {
-      path: "members.member",
-      select: "userName email profilePhoto",
+      path: 'members.member',
+      select: 'userName email profilePhoto',
     },
   ]);
   return res
     .status(200)
-    .json(new ApiRes(200, populatedTeam, "Team details updated successfully"));
+    .json(new ApiRes(200, populatedTeam, 'Team details updated successfully'));
 });
 
 const deleteTeam = asyncFunc(async (req, res) => {
@@ -97,34 +97,34 @@ const deleteTeam = asyncFunc(async (req, res) => {
   const user = req.user;
   const { teamName } = req.body;
   if (teamName !== team.teamName) {
-    throw new ApiError(400, "Invalid Team name");
+    throw new ApiError(400, 'Invalid Team name');
   }
   if (user._id.toString() !== team.createdBy.toString()) {
-    throw new ApiError(403, "Only the team owner can delete the team");
+    throw new ApiError(403, 'Only the team owner can delete the team');
   }
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     await User.updateMany(
-      { "inTeams.team": team._id },
+      { 'inTeams.team': team._id },
       { $pull: { inTeams: { team: team._id } } },
-      { session },
+      { session }
     );
     await Invite.deleteMany(
       {
         forTeam: team._id,
       },
-      { session },
+      { session }
     );
     await Project.updateMany(
       { teamsInclud: team._id },
       { $pull: { teamsInclud: team._id } },
-      { session },
+      { session }
     );
     await Organization.updateMany(
       { teams: team._id },
       { $pull: { teams: team._id } },
-      { session },
+      { session }
     );
     const org = await Organization.findById(team.inOrg).session(session);
     if (org) {
@@ -138,13 +138,13 @@ const deleteTeam = asyncFunc(async (req, res) => {
     session.endSession();
     return res
       .status(200)
-      .json(new ApiRes(200, null, "Team delete successfully"));
+      .json(new ApiRes(200, null, 'Team delete successfully'));
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     throw new ApiError(
       500,
-      "Failed to delete team due to a server error, Please try again later",
+      'Failed to delete team due to a server error, Please try again later'
     );
   }
 });
@@ -155,20 +155,20 @@ const inviteMemberForTeam = asyncFunc(async (req, res) => {
   const team = req.team;
   const org = req.org;
   if (!email) {
-    throw new ApiError(400, "Email is required");
+    throw new ApiError(400, 'Email is required');
   }
   const user = await User.findOne({ email });
   if (!user) {
     throw new ApiError(
       400,
-      "User with this email does not Exists, make sure that user have an account",
+      'User with this email does not Exists, make sure that user have an account'
     );
   }
   const isMemberInTeam = user.inTeams.some(
-    (t) => t.team.toString() == team._id.toString(),
+    t => t.team.toString() == team._id.toString()
   );
   if (isMemberInTeam) {
-    throw new ApiError(400, "This Member is already in team");
+    throw new ApiError(400, 'This Member is already in team');
   }
   const inviteExist = await Invite.findOne({
     email,
@@ -178,7 +178,7 @@ const inviteMemberForTeam = asyncFunc(async (req, res) => {
   if (inviteExist) {
     throw new ApiError(
       400,
-      "An invite has already been sent to this email for this Team. Please wait for the user to accept or decline it",
+      'An invite has already been sent to this email for this Team. Please wait for the user to accept or decline it'
     );
   }
   const invite = await Invite.create({
@@ -186,7 +186,7 @@ const inviteMemberForTeam = asyncFunc(async (req, res) => {
     forOrg: org._id,
     invitedBy: inviteBy._id,
     email,
-    asRoleOf: asRoleOf || "member",
+    asRoleOf: asRoleOf || 'member',
   });
   const inviteLink = `${process.env.APP_URL}/invite/accept/${invite._id}`;
   user.invites.push(invite._id);
@@ -228,8 +228,8 @@ const inviteMemberForTeam = asyncFunc(async (req, res) => {
       new ApiRes(
         200,
         invite,
-        `Invitation fro the team - ${team.teamName} sent successfully `,
-      ),
+        `Invitation fro the team - ${team.teamName} sent successfully `
+      )
     );
 });
 
@@ -241,26 +241,26 @@ const acceptInviteForTeam = asyncFunc(async (req, res) => {
   if (!invite)
     throw new ApiError(
       404,
-      "Invitation not found or may have been accepted/declined.",
+      'Invitation not found or may have been accepted/declined.'
     );
   if (user.email !== invite.email)
     throw new ApiError(403, `This invitation is only for ${invite.email}`);
 
   const team = await Team.findById(invite.forTeam);
-  if (!team) throw new ApiError(404, "Team not found");
+  if (!team) throw new ApiError(404, 'Team not found');
 
   const org = await Organization.findById(invite.forOrg);
-  if (!org) throw new ApiError(404, "Organization not found");
+  if (!org) throw new ApiError(404, 'Organization not found');
 
   const isMemberInTeam = team.members.some(
-    (m) => m.member.toString() === user._id.toString(),
+    m => m.member.toString() === user._id.toString()
   );
   const isMemberInOrg = org.members.some(
-    (m) => m.member.toString() === user._id.toString(),
+    m => m.member.toString() === user._id.toString()
   );
 
   if (isMemberInOrg && isMemberInTeam) {
-    throw new ApiError(400, "You are already part of this team");
+    throw new ApiError(400, 'You are already part of this team');
   }
 
   const session = await mongoose.startSession();
@@ -270,28 +270,28 @@ const acceptInviteForTeam = asyncFunc(async (req, res) => {
     if (!isMemberInTeam) {
       team.members.push({
         member: user._id,
-        role: invite.asRoleOf || "member",
+        role: invite.asRoleOf || 'member',
       });
       team.timeline.push({
         text: `<b>${user.userName}</b> has joined the Team`,
       });
       user.inTeams.push({
         team: team._id,
-        role: invite.asRoleOf || "member",
+        role: invite.asRoleOf || 'member',
       });
     }
 
     if (!isMemberInOrg) {
       org.members.push({
         member: user._id,
-        role: invite.asRoleOf || "member",
+        role: invite.asRoleOf || 'member',
       });
       org.timeline.push({
         text: `<b>${user.userName}</b> has joined the Organization`,
       });
       user.inOrg.push({
         org: org._id,
-        role: invite.asRoleOf || "member",
+        role: invite.asRoleOf || 'member',
       });
     }
 
@@ -309,15 +309,15 @@ const acceptInviteForTeam = asyncFunc(async (req, res) => {
     await session.abortTransaction();
     throw new ApiError(
       500,
-      "Failed to accept invitation due to server error. Please try again later.",
+      'Failed to accept invitation due to server error. Please try again later.'
     );
   } finally {
     session.endSession();
   }
 
   const populatedTeam = await Team.findById(team._id).populate({
-    path: "members.member createdBy projects",
-    select: "userName email profilePhoto projectName description",
+    path: 'members.member createdBy projects',
+    select: 'userName email profilePhoto projectName description',
   });
 
   return res.status(200).json(
@@ -339,8 +339,8 @@ const acceptInviteForTeam = asyncFunc(async (req, res) => {
           _id: team._id,
         },
       },
-      `Invitation accepted successfully for the team - ${populatedTeam.teamName}`,
-    ),
+      `Invitation accepted successfully for the team - ${populatedTeam.teamName}`
+    )
   );
 });
 
@@ -348,22 +348,22 @@ const declineInviteForTeam = asyncFunc(async (req, res) => {
   const { inviteId } = req.params;
   const user = req.user;
   if (!mongoose.Types.ObjectId.isValid(inviteId)) {
-    throw new ApiError(400, "Invalid invite ID");
+    throw new ApiError(400, 'Invalid invite ID');
   }
   const invite = await Invite.findById(inviteId);
   if (!invite) {
-    throw new ApiError(400, "The Invitation is invalid");
+    throw new ApiError(400, 'The Invitation is invalid');
   }
   if (user.email !== invite.email) {
     throw new ApiError(
       400,
-      `This invitation is only for ${invite.email} you can't decline this.`,
+      `This invitation is only for ${invite.email} you can't decline this.`
     );
   }
   await Invite.findByIdAndDelete(inviteId);
   return res
     .status(200)
-    .json(new ApiRes(200, null, "Invite declined successfully"));
+    .json(new ApiRes(200, null, 'Invite declined successfully'));
 });
 
 const removeMemberFromTeam = asyncFunc(async (req, res) => {
@@ -371,13 +371,13 @@ const removeMemberFromTeam = asyncFunc(async (req, res) => {
   const team = req.team;
   const { memberId } = req.params;
   if (!mongoose.Types.ObjectId.isValid(memberId)) {
-    throw new ApiError(400, "Invalid member ID");
+    throw new ApiError(400, 'Invalid member ID');
   }
   const isMemberInTeam = team.members.some(
-    (m) => m.member.toString() == memberId.toString(),
+    m => m.member.toString() == memberId.toString()
   );
   if (!isMemberInTeam) {
-    throw new ApiError(404, "The member is not part of this team");
+    throw new ApiError(404, 'The member is not part of this team');
   }
   const isTeamOwner = team.createdBy.toString() == memberId.toString();
   if (isTeamOwner) {
@@ -386,7 +386,7 @@ const removeMemberFromTeam = asyncFunc(async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    team.members = team.members.filter((m) => m.member.toString() !== memberId);
+    team.members = team.members.filter(m => m.member.toString() !== memberId);
     const member = await User.findById(memberId).session(session);
     if (member) {
       member.inTeams.pull({
@@ -430,12 +430,12 @@ const removeMemberFromTeam = asyncFunc(async (req, res) => {
     }
     const populatedTeam = await Team.findById(team._id).populate([
       {
-        path: "createdBy",
-        select: "userName email profilePhoto",
+        path: 'createdBy',
+        select: 'userName email profilePhoto',
       },
       {
-        path: "members.member",
-        select: "userName email profilePhoto",
+        path: 'members.member',
+        select: 'userName email profilePhoto',
       },
     ]);
     await session.commitTransaction();
@@ -446,15 +446,15 @@ const removeMemberFromTeam = asyncFunc(async (req, res) => {
         new ApiRes(
           200,
           populatedTeam,
-          "Member removed successfully from the team",
-        ),
+          'Member removed successfully from the team'
+        )
       );
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     throw new ApiError(
       500,
-      "Failed to remove member from the team due to a server error, Please try again later.",
+      'Failed to remove member from the team due to a server error, Please try again later.'
     );
   }
 });
@@ -465,71 +465,71 @@ const changeTeamMemberRole = asyncFunc(async (req, res) => {
   const team = req.team;
   const user = req.user;
   if (!mongoose.Types.ObjectId.isValid(memberId)) {
-    throw new ApiError(400, "Invalid member ID");
+    throw new ApiError(400, 'Invalid member ID');
   }
   if (team.createdBy.toString() == memberId.toString()) {
     throw new ApiError(
       400,
-      "This is the owner of the Team you can't change the role of owner",
+      "This is the owner of the Team you can't change the role of owner"
     );
   }
   const member = team.members.find(
-    (m) => m.member.toString() === memberId.toString(),
+    m => m.member.toString() === memberId.toString()
   );
   await team.populate({
-    path: "members.member",
-    select: "userName",
+    path: 'members.member',
+    select: 'userName',
   });
   if (!member) {
-    throw new ApiError(404, "This member is not part of this team");
+    throw new ApiError(404, 'This member is not part of this team');
   }
-  const validRoles = ["admin", "moderator", "leader", "member", "viewer"];
+  const validRoles = ['admin', 'moderator', 'leader', 'member', 'viewer'];
   if (!validRoles.includes(asRoleOf)) {
-    throw new ApiError(400, "Invalid role");
+    throw new ApiError(400, 'Invalid role');
   }
   await User.updateOne(
-    { _id: memberId, "inTeams.team": team._id },
+    { _id: memberId, 'inTeams.team': team._id },
     {
       $set: {
-        "inTeams.$.role": asRoleOf,
+        'inTeams.$.role': asRoleOf,
       },
-    },
+    }
   );
   const oldRole = member.role;
   member.role = asRoleOf;
-  team.markModified("members");
+  team.markModified('members');
   const teamTimelineHtml = `<b>${user.userName}</b> changed the role of <strong>${member.member.userName}</strong> from <em>${oldRole}</em> to <em>${asRoleOf}</em>.`;
   team.timeline.push({
     text: teamTimelineHtml,
   });
   await team.save();
   await team.populate({
-    path: "members.member",
-    select: "userName email profilePhoto",
+    path: 'members.member',
+    select: 'userName email profilePhoto',
   });
 
   const updatedMember = team.members.find(
-    (m) => m.member._id.toString() === memberId.toString(),
+    m => m.member._id.toString() === memberId.toString()
   );
   return res
     .status(200)
-    .json(new ApiRes(200, updatedMember, "Member role updated successfully"));
+    .json(new ApiRes(200, updatedMember, 'Member role updated successfully'));
 });
 
 const leaveTeam = asyncFunc(async (req, res) => {
   const team = req.team;
   const user = req.user;
   const isMemberInTeam = team.members.some(
-    (m) => m.member.toString() === user._id.toString(),
+    m => m.member.toString() === user._id.toString()
   );
   if (!isMemberInTeam) {
-    throw new ApiError(403, "You are not part of this team");
+    throw new ApiError(403, 'You are not part of this team');
   }
   const isOwner = team.createdBy.toString() == user._id.toString();
   if (isOwner) {
     throw new ApiError(
       403,
-      "you are owner of this team, you can't leave this team.",
+      "you are owner of this team, you can't leave this team."
     );
   }
   const session = await mongoose.startSession();
@@ -549,13 +549,13 @@ const leaveTeam = asyncFunc(async (req, res) => {
     session.endSession();
     return res
       .status(200)
-      .json(new ApiRes(200, null, "You successfully leave the team"));
+      .json(new ApiRes(200, null, 'You successfully leave the team'));
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     throw new ApiError(
       500,
-      "Failed to leave team due to server Error, please try again later",
+      'Failed to leave team due to server Error, please try again later'
     );
   }
 });
@@ -565,23 +565,23 @@ const transferOwnershipOfTeam = asyncFunc(async (req, res) => {
   const user = req.user;
   const team = req.team;
   if (!mongoose.Types.ObjectId.isValid(memberId)) {
-    throw new ApiError(400, "Invalid member ID");
+    throw new ApiError(400, 'Invalid member ID');
   }
   const isMemberInTeam = team.members.find(
-    (m) => m.member.toString() == memberId.toString(),
+    m => m.member.toString() == memberId.toString()
   );
   if (!isMemberInTeam) {
-    throw new ApiError(404, "The Member is not part of This team");
+    throw new ApiError(404, 'The Member is not part of This team');
   }
   if (user._id.toString() !== team.createdBy.toString()) {
-    throw new ApiError(403, "You are not the owner of this team");
+    throw new ApiError(403, 'You are not the owner of this team');
   }
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     team.createdBy = memberId;
-    isMemberInTeam.role = "admin";
-    team.markModified("members");
+    isMemberInTeam.role = 'admin';
+    team.markModified('members');
     team.timeline.push({
       text: `<b>${user.userName}</b> transferred ownership of this team to <b>${isMemberInTeam.userName}</b>`,
     });
@@ -589,23 +589,23 @@ const transferOwnershipOfTeam = asyncFunc(async (req, res) => {
     await User.updateOne(
       {
         _id: memberId,
-        "inTeams.team": team._id,
+        'inTeams.team': team._id,
       },
       {
         $set: {
-          "inTeams.$.role": "admin",
+          'inTeams.$.role': 'admin',
         },
       },
-      { session },
+      { session }
     );
     const updatedTeam = await team.populate([
       {
-        path: "createdBy",
-        select: "userName email profilePhoto",
+        path: 'createdBy',
+        select: 'userName email profilePhoto',
       },
       {
-        path: "members.member",
-        select: "userName email profilePhoto",
+        path: 'members.member',
+        select: 'userName email profilePhoto',
       },
     ]);
     await session.commitTransaction();
@@ -616,15 +616,15 @@ const transferOwnershipOfTeam = asyncFunc(async (req, res) => {
         new ApiRes(
           200,
           updatedTeam.members,
-          "Ownership transferred successfully",
-        ),
+          'Ownership transferred successfully'
+        )
       );
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     throw new ApiError(
       500,
-      "Failed to transferred ownership due to server error, please try again later.",
+      'Failed to transferred ownership due to server error, please try again later.'
     );
   }
 });

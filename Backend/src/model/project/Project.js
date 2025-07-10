@@ -1,15 +1,15 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const projectSchema = new mongoose.Schema(
   {
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: 'User',
       required: true,
     },
     inOrg: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Organization",
+      ref: 'Organization',
     },
     projectName: {
       type: String,
@@ -19,25 +19,25 @@ const projectSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
-      default: "",
+      default: '',
     },
     teams: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Team",
+        ref: 'Team',
       },
     ],
     members: [
       {
         member: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
+          ref: 'User',
           required: true,
         },
         role: {
           type: String,
-          enum: ["admin", "moderator", "leader", "member", "viewer"],
-          default: "member",
+          enum: ['admin', 'moderator', 'leader', 'member', 'viewer'],
+          default: 'member',
         },
         joinedAt: {
           type: Date,
@@ -48,12 +48,12 @@ const projectSchema = new mongoose.Schema(
     projectSections: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Section",
+        ref: 'Section',
       },
     ],
     chatRoom: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "ChatRoom",
+      ref: 'ChatRoom',
     },
     deadline: {
       type: Date,
@@ -61,9 +61,9 @@ const projectSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
-const Project = mongoose.model("Project", projectSchema);
+const Project = mongoose.model('Project', projectSchema);
 
 export default Project;
