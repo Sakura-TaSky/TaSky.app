@@ -80,19 +80,21 @@ const ProjectPage = () => {
             </i>
           </h1>
           {showProInfo && (
-            <p className='text-sm text-zinc-500 line-clamp-2 pl-2'>{project?.description || 'No description !'}</p>
+            <>
+              <p className='text-sm text-zinc-500 line-clamp-2 pl-2'>{project?.description || 'No description !'}</p>
+              <div title='Leave Project' className='ml-2 mt-2'>
+                <IconBtn
+                  onClick={() => {
+                    if (!project) return;
+                    setShowLeaveProjectPopup(true);
+                  }}
+                  text=''
+                  icon={<LogOut size={16} className='rotate-180' />}
+                  className='rounded-md p-1.5 border text-red-500 border-red-500/30 bg-red-500/5 hover:border-red-500/60 hover:bg-red-500/20'
+                />
+              </div>
+            </>
           )}
-          <div title='Leave Project' className='ml-2 mt-2'>
-            <IconBtn
-              onClick={() => {
-                if (!project) return;
-                setShowLeaveProjectPopup(true);
-              }}
-              text=''
-              icon={<LogOut size={16} className='rotate-180' />}
-              className='rounded-md p-1.5 border text-red-500 border-red-500/30 bg-red-500/5 hover:border-red-500/60 hover:bg-red-500/20'
-            />
-          </div>
         </div>
         <div className='flex gap-2 flex-wrap justify-end'>
           <div className='flex flex-col gap-1 items-end'>
@@ -107,7 +109,7 @@ const ProjectPage = () => {
                 className={`${showMemberOfProject && '  border-zinc-500'} border border-zinc-50/0 cursor-pointer flex gap-2 items-center p-1 rounded smooth`}
               >
                 {showMemberOfProject && <IoArrowBackSharp size={18} />}
-                <AvatarGroup size='sm' users={project?.members.map(m => m.member)} />
+                <AvatarGroup maxVisible={3} size='sm' users={project?.members.map(m => m.member)} />
               </Link>
               <Btn
                 onClick={() => {

@@ -26,13 +26,9 @@ const useTeam = () => {
   const createTeam = async data => {
     dispatch(setTeamLoading(true));
     try {
-      const res = await axios.post(
-        `${backendUrl}/team/${org?._id}/createTeam`,
-        data,
-        {
-          withCredentials: true,
-        }
-      );
+      const res = await axios.post(`${backendUrl}/team/${org?._id}/createTeam`, data, {
+        withCredentials: true,
+      });
       if (res.data.data) {
         const newTeam = res.data.data;
         dispatch(
@@ -62,11 +58,7 @@ const useTeam = () => {
         return true;
       }
     } catch (error) {
-      dispatch(
-        setTeamErrorMessage(
-          error.response?.data?.message || 'failed to create Team !'
-        )
-      );
+      dispatch(setTeamErrorMessage(error.response?.data?.message || 'failed to create Team !'));
       return false;
     } finally {
       dispatch(setTeamLoading(false));
@@ -85,16 +77,12 @@ const useTeam = () => {
       );
       if (res.data.data) {
         const updatedTeam = res.data.data;
-        const updatedOrgTeams = org.teams.map(t =>
-          t._id === updatedTeam._id ? updatedTeam : t
-        );
+        const updatedOrgTeams = org.teams.map(t => (t._id === updatedTeam._id ? updatedTeam : t));
         const updatedUserInTeams = user.inTeams.map(t =>
           t.team._id === updatedTeam._id
             ? {
                 ...t,
-                role:
-                  updatedTeam.members.find(m => m.member._id === user._id)
-                    ?.role || t.role,
+                role: updatedTeam.members.find(m => m.member._id === user._id)?.role || t.role,
                 team: {
                   _id: updatedTeam._id,
                   teamName: updatedTeam.teamName,
@@ -126,11 +114,8 @@ const useTeam = () => {
         return true;
       }
     } catch (error) {
-      dispatch(
-        setTeamErrorMessage(
-          error.response?.data?.message || 'failed to updated Team !'
-        )
-      );
+      console.log(error);
+      dispatch(setTeamErrorMessage(error.response?.data?.message || 'failed to updated Team !'));
       return false;
     } finally {
       dispatch(setTeamLoading(false));
@@ -140,18 +125,13 @@ const useTeam = () => {
   const deleteTeam = async (teamId, teamName) => {
     dispatch(setTeamLoading(true));
     try {
-      const res = await axios.delete(
-        `${backendUrl}/team/${org?._id}/deleteTeam/${teamId}`,
-        {
-          data: { teamName },
-          withCredentials: true,
-        }
-      );
+      const res = await axios.delete(`${backendUrl}/team/${org?._id}/deleteTeam/${teamId}`, {
+        data: { teamName },
+        withCredentials: true,
+      });
       if (res.data) {
         const updatedOrgTeams = org.teams.filter(t => t._id !== teamId);
-        const updatedUserInTeams = user.inTeams.filter(
-          t => t.team._id !== teamId
-        );
+        const updatedUserInTeams = user.inTeams.filter(t => t.team._id !== teamId);
         dispatch(
           setOrg({
             ...org,
@@ -169,11 +149,7 @@ const useTeam = () => {
         return true;
       }
     } catch (error) {
-      dispatch(
-        setTeamErrorMessage(
-          error.response?.data?.message || 'failed to del Team !'
-        )
-      );
+      dispatch(setTeamErrorMessage(error.response?.data?.message || 'failed to del Team !'));
       return false;
     } finally {
       dispatch(setTeamLoading(false));
@@ -183,12 +159,9 @@ const useTeam = () => {
   const removeMemberFromTeam = async memberId => {
     dispatch(setMemberLoading(true));
     try {
-      const res = await axios.delete(
-        `${backendUrl}/team/${org?._id}/removeMemberFromTeam/${team?._id}/${memberId}`,
-        {
-          withCredentials: true,
-        }
-      );
+      const res = await axios.delete(`${backendUrl}/team/${org?._id}/removeMemberFromTeam/${team?._id}/${memberId}`, {
+        withCredentials: true,
+      });
       if (res.data) {
         const newMembers = team?.members.filter(m => m.member._id !== memberId);
         const updatedOrgTeams = org.teams.map(t => {
@@ -216,11 +189,7 @@ const useTeam = () => {
         return true;
       }
     } catch (error) {
-      dispatch(
-        setMemberErrorMessage(
-          error.response?.data?.message || 'failed to remove member !'
-        )
-      );
+      dispatch(setMemberErrorMessage(error.response?.data?.message || 'failed to remove member !'));
       return false;
     } finally {
       dispatch(setMemberLoading(false));
@@ -239,9 +208,7 @@ const useTeam = () => {
       );
       if (res.data.data) {
         const updatedMember = res.data.data;
-        const newMembers = team?.members.map(m =>
-          m._id === updatedMember._id ? updatedMember : m
-        );
+        const newMembers = team?.members.map(m => (m._id === updatedMember._id ? updatedMember : m));
         dispatch(
           setTeam({
             ...team,
@@ -252,11 +219,7 @@ const useTeam = () => {
         return true;
       }
     } catch (error) {
-      dispatch(
-        setMemberErrorMessage(
-          error.response?.data?.message || 'failed to change Member Role !'
-        )
-      );
+      dispatch(setMemberErrorMessage(error.response?.data?.message || 'failed to change Member Role !'));
       return false;
     } finally {
       dispatch(setMemberLoading(false));
@@ -285,11 +248,7 @@ const useTeam = () => {
         return true;
       }
     } catch (error) {
-      dispatch(
-        setMemberErrorMessage(
-          error.response?.data?.message || 'failed to Transfer Ownership !'
-        )
-      );
+      dispatch(setMemberErrorMessage(error.response?.data?.message || 'failed to Transfer Ownership !'));
       return false;
     } finally {
       dispatch(setMemberLoading(false));
@@ -299,28 +258,16 @@ const useTeam = () => {
   const inviteMemberForTeam = async data => {
     dispatch(setTeamLoading(true));
     try {
-      const res = await axios.post(
-        `${backendUrl}/team/${org?._id}/inviteMemberForTeam/${team?._id}`,
-        data,
-        {
-          withCredentials: true,
-        }
-      );
+      const res = await axios.post(`${backendUrl}/team/${org?._id}/inviteMemberForTeam/${team?._id}`, data, {
+        withCredentials: true,
+      });
       if (res) {
         addMessage('Invite sent successfully', 'success');
         return true;
       }
     } catch (error) {
-      dispatch(
-        setTeamErrorMessage(
-          error.response?.data?.message || 'failed to invite Member !'
-        )
-      );
-      addMessage(
-        error.response?.data?.message,
-        'error' || 'failed to invite Member !',
-        'error'
-      );
+      dispatch(setTeamErrorMessage(error.response?.data?.message || 'failed to invite Member !'));
+      addMessage(error.response?.data?.message, 'error' || 'failed to invite Member !', 'error');
       return false;
     } finally {
       dispatch(setTeamLoading(false));
@@ -340,10 +287,7 @@ const useTeam = () => {
         const teamObj = newteam?.team || newteam;
         const role = newteam?.role;
         const newInvites = user.invites.filter(i => i._id !== inviteId);
-        const newInTeams = [
-          ...user.inTeams,
-          { team: teamObj, role, _id: newteam._id },
-        ];
+        const newInTeams = [...user.inTeams, { team: teamObj, role, _id: newteam._id }];
         const updatedUser = {
           ...user,
           invites: newInvites,
@@ -355,9 +299,7 @@ const useTeam = () => {
         }
         dispatch(setUser(updatedUser));
         if (org?._id === newOrg._id) {
-          const isAlreadyInOrgMembers = org.members.some(
-            m => m.member._id === user._id
-          );
+          const isAlreadyInOrgMembers = org.members.some(m => m.member._id === user._id);
           if (!isAlreadyInOrgMembers) {
             const userToAdd = {
               member: {
@@ -366,9 +308,7 @@ const useTeam = () => {
                 email: user.email,
                 profilePhoto: user.profilePhoto,
               },
-              role:
-                newteam.members.find(m => m.member._id === user._id)?.role ||
-                'member',
+              role: newteam.members.find(m => m.member._id === user._id)?.role || 'member',
               _id: user._id,
               joinedAt: new Date().toISOString(),
             };
@@ -384,11 +324,7 @@ const useTeam = () => {
         return true;
       }
     } catch (error) {
-      dispatch(
-        setInviteErrorMessage(
-          error.response?.data?.message || 'Failed to accept invitation!'
-        )
-      );
+      dispatch(setInviteErrorMessage(error.response?.data?.message || 'Failed to accept invitation!'));
       return false;
     } finally {
       dispatch(setInviteLoading(false));
@@ -398,12 +334,9 @@ const useTeam = () => {
   const declineInviteForTeam = async inviteId => {
     dispatch(setInviteLoading(true));
     try {
-      const res = await axios.delete(
-        `${backendUrl}/team/declineInviteForTeam/${inviteId}`,
-        {
-          withCredentials: true,
-        }
-      );
+      const res = await axios.delete(`${backendUrl}/team/declineInviteForTeam/${inviteId}`, {
+        withCredentials: true,
+      });
       if (res) {
         const newInvitation = user.invites.filter(i => (i = i._id != inviteId));
         dispatch(
@@ -416,11 +349,7 @@ const useTeam = () => {
         return true;
       }
     } catch (error) {
-      dispatch(
-        setInviteErrorMessage(
-          error.response?.data?.message || 'failed to reject Invitation   !'
-        )
-      );
+      dispatch(setInviteErrorMessage(error.response?.data?.message || 'failed to reject Invitation   !'));
       return false;
     } finally {
       dispatch(setInviteLoading(false));
@@ -445,9 +374,7 @@ const useTeam = () => {
             inTeams: userUpdatedInTeam,
           })
         );
-        const updatedTeamMembers = team.members.filter(
-          m => m.member._id !== user._id
-        );
+        const updatedTeamMembers = team.members.filter(m => m.member._id !== user._id);
         dispatch(
           setTeam({
             ...team,
@@ -458,11 +385,7 @@ const useTeam = () => {
         return true;
       }
     } catch (error) {
-      dispatch(
-        setTeamErrorMessage(
-          error.response?.data?.message || 'failed to leave Team!'
-        )
-      );
+      dispatch(setTeamErrorMessage(error.response?.data?.message || 'failed to leave Team!'));
       return false;
     } finally {
       dispatch(setTeamLoading(false));

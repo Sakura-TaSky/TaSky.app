@@ -9,12 +9,7 @@ import { FaCrown } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 
 const TopBar = () => {
-  const {
-    membersShowInList,
-    setMembersShowInList,
-    taskShowInBoard,
-    setTaskShowInBoard,
-  } = useUIState();
+  const { membersShowInList, setMembersShowInList, taskShowInBoard, setTaskShowInBoard } = useUIState();
 
   const { theme, lightTheme, darkTheme } = useTheme();
 
@@ -56,38 +51,34 @@ const TopBar = () => {
           />
         </div>
       )}
-      {location.pathname.includes('project') &&
-        !location.pathname.includes('-P-Member') && (
-          <div className='flex gap-2 items-center justify-center'>
-            <div className='relative group'>
-              <IconBtn
-                onClick={() => setTaskShowInBoard(true)}
-                className={`${taskShowInBoard ? 'bg-zinc-500/20 shadow' : 'hover:bg-zinc-500/20'} text-sm p-2 pr-3 rounded`}
-                text='Board'
-                icon={<Columns3 strokeWidth={2.5} size={18} className='mt-1' />}
-              />
-              <FaCrown
-                className='group-hover:scale-120 group-hover:-rotate-30 smooth border rounded-full p-[1px]  absolute -top-1 -left-1 text-yellow-500 shadow bg-yellow-50 shadow-yellow-500'
-                size={12}
-              />
-            </div>
+      {location.pathname.includes('project') && !location.pathname.includes('-P-Member') && (
+        <div className='flex gap-2 items-center justify-center'>
+          <div className='relative group'>
             <IconBtn
-              onClick={() => setTaskShowInBoard(false)}
-              className={`${!taskShowInBoard ? 'bg-zinc-500/20 shadow' : ' hover:bg-zinc-500/20'} text-sm p-2 pr-3 rounded `}
-              text='Table'
-              icon={<AlignJustify strokeWidth={3} size={18} className='mt-1' />}
+              onClick={() => setTaskShowInBoard(true)}
+              className={`${taskShowInBoard ? 'bg-zinc-500/20 shadow' : 'hover:bg-zinc-500/20'} text-sm p-2 pr-3 rounded`}
+              text='Board'
+              icon={<Columns3 strokeWidth={2.5} size={18} className='mt-1' />}
+            />
+            <FaCrown
+              className='group-hover:scale-120 group-hover:-rotate-30 smooth border rounded-full p-[1px]  absolute -top-1 -left-1 text-yellow-500 shadow bg-yellow-50 shadow-yellow-500'
+              size={12}
             />
           </div>
-        )}
+          <IconBtn
+            onClick={() => setTaskShowInBoard(false)}
+            className={`${!taskShowInBoard ? 'bg-zinc-500/20 shadow' : ' hover:bg-zinc-500/20'} text-sm p-2 pr-3 rounded `}
+            text='Table'
+            icon={<AlignJustify strokeWidth={3} size={18} className='mt-1' />}
+          />
+        </div>
+      )}
       <i></i>
+      {/* for debug */}
       <div className='flex items-center gap-2'>
         <OrgTimeline />
         <div
-          onClick={() => (
-            console.log(user),
-            console.log(org),
-            console.log(project)
-          )}
+          onClick={() => (console.log(user), console.log(org), console.log(project))}
           className='cursor-pointer h-8 w-8 rounded border bg-zinc-800 dark:bg-zinc-200'
         >
           Log

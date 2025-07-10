@@ -7,6 +7,7 @@ import {
   Task,
   AddTaskBtn,
   setTaskErrorMessage,
+  BlueBtn,
 } from '@/global';
 import React, { useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -39,7 +40,7 @@ const statusColor = {
 const ProjectSection = () => {
   const { section } = useSelector(state => state.section);
 
-  const { taskShowInBoard, setShowTaskPage, showTaskPage } = useUIState();
+  const { taskShowInBoard, setShowTaskPage, setTaskShowInBoard } = useUIState();
 
   const [expandedSections, setExpandedSections] = useState(
     statusOrder.reduce((acc, status) => {
@@ -57,8 +58,12 @@ const ProjectSection = () => {
     }));
   };
 
-  if (!section || !section.tasks)
-    return <p className='w-full h-50 flex items-center justify-center text-zinc-500 text-sm italic'>No Tasks!</p>;
+  if (!section)
+    return (
+      <div className='w-full h-50 flex items-center justify-center text-zinc-500 text-sm italic'>
+        <p>Create a section to start working on your tasks !</p>
+      </div>
+    );
 
   const groupedTasks = statusOrder.map(status => ({
     status,
@@ -68,7 +73,12 @@ const ProjectSection = () => {
   return (
     <>
       {taskShowInBoard ? (
-        <></>
+        <>
+          <div className=' h-50 w-full flex items-center justify-center flex-col gap-2'>
+            <p className='text-zinc-500 italic'>Board view is not available for now !</p>
+            <BlueBtn text='Continue With Table View' onClick={() => setTaskShowInBoard(false)} />
+          </div>
+        </>
       ) : (
         <div className='overflow-x-auto pb-10'>
           {groupedTasks.map(({ status, tasks }) => (
@@ -162,9 +172,16 @@ const ProjectSection = () => {
                             <td className='p-4 border-r border-gray-500/10'>{task.comments?.length || 0}</td>
                             <td className='p-4 border-r border-gray-500/10'>{task.attachments?.length || 0}</td>
                             <td className='p-4 border-r border-gray-500/10'>{task.links?.length || 0}</td>
-                            <td className='p-4 border-r border-gray-500/10'>
+                            <td className='p-4 border-r border-gray-500/10 flex items-center gap-4'>
                               {task.assignedToMember?.length > 0 ? (
                                 <AvatarGroup tooltip={false} size='sm' users={task.assignedToMember?.map(m => m)} />
+                              ) : (
+                                '—'
+                              )}
+                              {task.assignedToTeam?.length > 0 ? (
+                                <div className='flex items-center justify-center h-6.5 w-6.5 rounded-full bg-gray-500 border text-white'>
+                                  <span>{task.assignedToTeam[0]?.teamName?.slice(0, 1).toUpperCase()}</span>
+                                </div>
                               ) : (
                                 '—'
                               )}

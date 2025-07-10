@@ -10,8 +10,6 @@ const App = () => {
 
   const location = useLocation();
 
-  const { appLoading } = useSelector(state => state.auth);
-
   useEffect(() => {
     const fetchUser = async () => {
       const success = await getUser();
@@ -29,6 +27,8 @@ const App = () => {
     };
     fetchUser();
   }, []);
+
+  const { appLoading } = useSelector(state => state.auth);
 
   if (appLoading) {
     return (
